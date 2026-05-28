@@ -61,13 +61,14 @@
     color-mix(in srgb, var(--surface) 92%, transparent);
   padding: 16px;
   min-height: 178px;
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
 .portal-card:hover,
 .portal-card:focus-visible {
   border-color: var(--strong-line);
   transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
 }
 
 .portal-card span {
@@ -121,6 +122,13 @@
   color: var(--text);
   padding: 12px;
   text-align: left;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.list-button:hover,
+.list-button:focus-visible {
+  border-color: var(--strong-line);
+  transform: translateY(-1px);
 }
 
 .list-button.active {
@@ -423,6 +431,10 @@ body.light-mode .graph-board {
   align-items: start;
 }
 
+.search-studio-section {
+  padding-top: 48px;
+}
+
 .search-control-panel form {
   display: grid;
   gap: 10px;
@@ -439,13 +451,36 @@ body.light-mode .graph-board {
   color: var(--muted);
 }
 
-.search-results-stack {
+.search-results-stack,
+.search-output-grid,
+.result-panel {
   min-width: 0;
+}
+
+.search-output-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.result-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 44%),
+    color-mix(in srgb, var(--surface) 92%, transparent);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.nih-import-panel {
+  border-color: color-mix(in srgb, var(--teal) 28%, var(--line));
 }
 
 .local-result-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
   margin-top: 12px;
 }
@@ -460,11 +495,12 @@ body.light-mode .graph-board {
   background: rgba(255, 255, 255, 0.04);
   color: var(--muted);
   padding: 12px 14px;
+  margin-top: 10px;
 }
 
 .live-enrichment-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
   margin-top: 12px;
 }
@@ -479,7 +515,7 @@ body.light-mode .graph-board {
     linear-gradient(145deg, rgba(232, 188, 85, 0.055), transparent 46%),
     color-mix(in srgb, var(--surface) 94%, transparent);
   padding: 15px;
-  box-shadow: var(--shadow);
+  box-shadow: none;
   overflow-wrap: anywhere;
 }
 
@@ -518,7 +554,7 @@ body.light-mode .graph-board {
 
 .compound-property-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -569,7 +605,8 @@ body.light-mode .graph-board {
   .portal-grid,
   .source-browser-grid,
   .home-hero-grid,
-  .search-workbench-grid {
+  .search-workbench-grid,
+  .search-output-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -577,7 +614,8 @@ body.light-mode .graph-board {
   .page-layout,
   .detail-grid,
   .home-hero-grid,
-  .search-workbench-grid {
+  .search-workbench-grid,
+  .search-output-grid {
     grid-template-columns: 1fr;
   }
 }

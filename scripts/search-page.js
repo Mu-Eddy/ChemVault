@@ -37,6 +37,13 @@
       tags: item.tags || [],
       href: `reagents.html?id=${item.id}`
     }));
+    (data.compounds || []).forEach((item) => rows.push({
+      type: "Compound",
+      title: item.name,
+      body: [item.formula, item.family, item.summary, item.evidenceNote].filter(Boolean).join(" | "),
+      tags: [item.formula, item.cas, ...(item.synonyms || []), ...(item.tags || [])].filter(Boolean),
+      href: `search.html?q=${encode(item.name)}`
+    }));
     (materials.materials || []).forEach((item) => rows.push({
       type: "Material",
       title: item.name,
@@ -149,7 +156,7 @@
         <div class="empty-state">
           <span class="eyebrow">Local database boundary</span>
           <h3>No strong local match</h3>
-          <p>The query is outside the current curated ChemVault index. Use the external academic sources below for NIH/NCBI, NIST, terminology, and DOI-level discovery.</p>
+          <p>The query is outside the current curated ChemVault index. NIH/PubChem imports are displayed in the panel beside this local result window.</p>
         </div>
       `;
       return 0;
@@ -187,6 +194,7 @@
 
     if (liveController) liveController.abort();
     latestLiveCandidates = [];
+    toggleImportAll(false);
     if (!query || query.length < 3) {
       status.textContent = "Enter at least three characters to request NIH and PubChem enrichment.";
       panel.innerHTML = "";
@@ -328,7 +336,7 @@
       cards.push(`
         <article class="live-card live-card-wide">
           <div class="live-card-head">
-            <span class="eyebrow">PubChem compound import</span>
+            <span class="eyebrow">NIH / NCBI PubChem import</span>
             <a href="${compound.href}" target="_blank" rel="noreferrer">CID ${esc(compound.cid)}</a>
           </div>
           <h3>${esc(compound.title)}</h3>
@@ -356,7 +364,7 @@
       cards.push(`
         <article class="live-card">
           <div class="live-card-head">
-            <span class="eyebrow">PubMed article metadata</span>
+            <span class="eyebrow">NIH / NLM PubMed metadata</span>
             <a href="${article.href}" target="_blank" rel="noreferrer">PMID ${esc(article.pmid)}</a>
           </div>
           <h3>${esc(article.title)}</h3>
@@ -373,6 +381,7 @@
       ? `${count} external records rendered for "${query}". ${localCount ? "Use them to extend the local context." : "These records fill the local database gap for this query."}`
       : `No PubChem compound or PubMed article metadata returned for "${query}". Use the outbound database links below.`;
     panel.innerHTML = cards.length ? cards.join("") : `<div class="empty-state">No external metadata was returned for this query.</div>`;
+    toggleImportAll(Boolean(latestLiveCandidates.length));
     wireImportButtons();
     renderImportedRecords();
   }
@@ -431,6 +440,14 @@
     });
   }
 
+  function toggleImportAll(show) {
+    const button = document.querySelector("[data-import-all]");
+    if (!button) return;
+    button.hidden = !show;
+    button.disabled = !show;
+    button.textContent = "Save all";
+  }
+
   function getImportedRecords() {
     try {
       const records = JSON.parse(localStorage.getItem(importedStoreKey) || "[]");
@@ -445,6 +462,20 @@
     const next = [item, ...records.filter((record) => record.id !== item.id)].slice(0, 40);
     try {
       localStorage.setItem(importedStoreKey, JSON.stringify(next));
+    } catch {
+      return;
+    }
+    renderImportedRecords();
+    renderLocal($("#academicSearch")?.value.trim() || "", $("#searchScope")?.value || "all");
+  }
+
+  function saveImportedRecords(items) {
+    const records = getImportedRecords();
+    const merged = [...items, ...records].filter((record, index, all) => {
+      return all.findIndex((item) => item.id === record.id) === index;
+    }).slice(0, 60);
+    try {
+      localStorage.setItem(importedStoreKey, JSON.stringify(merged));
     } catch {
       return;
     }
@@ -493,6 +524,12 @@
     }
     if (scope) scope.addEventListener("change", runSearch);
     document.addEventListener("click", (event) => {
+      const importAll = event.target.closest("[data-import-all]");
+      if (importAll) {
+        saveImportedRecords(latestLiveCandidates);
+        importAll.textContent = "Saved";
+        return;
+      }
       const clearButton = event.target.closest("[data-clear-imports]");
       if (!clearButton) return;
       localStorage.removeItem(importedStoreKey);

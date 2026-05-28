@@ -161,12 +161,14 @@ button {
   padding: 9px 10px;
   border-radius: 6px;
   font-size: 0.88rem;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
 .site-nav a:hover,
 .site-nav a:focus-visible {
   color: var(--text);
   background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
 }
 
 .header-actions {
@@ -213,6 +215,14 @@ button {
   border-radius: var(--radius);
   background: var(--surface);
   padding: 10px;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.search-hit:hover,
+.search-hit:focus-visible {
+  border-color: var(--strong-line);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
 }
 
 .search-hit span {
@@ -239,6 +249,12 @@ button {
   min-height: 38px;
   color: var(--text);
   background: rgba(255, 255, 255, 0.04);
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
 }
 
 .primary-button,
@@ -258,6 +274,12 @@ button {
   color: #171614;
 }
 
+.primary-button:hover,
+.primary-button:focus-visible {
+  box-shadow: 0 8px 20px rgba(232, 188, 85, 0.18);
+  transform: translateY(-1px);
+}
+
 .secondary-button:hover,
 .small-button:hover,
 .text-button:hover,
@@ -265,12 +287,41 @@ button {
 .calculator-tabs button:hover {
   border-color: var(--strong-line);
   background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.icon-button:active,
+.small-button:active,
+.primary-button:active,
+.secondary-button:active,
+.text-button:active,
+.segmented button:active,
+.calculator-tabs button:active,
+.site-nav a:active,
+.search-hit:active {
+  transform: translateY(0);
+}
+
+.small-button[hidden],
+.primary-button[hidden],
+.secondary-button[hidden] {
+  display: none;
 }
 
 .text-button {
   min-height: 32px;
   padding: 4px 8px;
   color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
 }
 
 .menu-toggle {

@@ -8,18 +8,19 @@
   <meta name="theme-color" content="#080a0a" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="../assets/styles.css?v=20260529" />
-  <link rel="stylesheet" href="../assets/portal.css?v=20260529" />
-  <script src="../data/chem-data.js?v=20260529" defer></script>
-  <script src="../data/reagent-extension.js?v=20260529" defer></script>
-  <script src="../data/research-data.js?v=20260529" defer></script>
-  <script src="../data/dossier-data.js?v=20260529" defer></script>
-  <script src="../data/method-data.js?v=20260529" defer></script>
-  <script src="../data/spectroscopy-data.js?v=20260529" defer></script>
-  <script src="../data/materials-data.js?v=20260529" defer></script>
-  <script src="../data/external-sources.js?v=20260529" defer></script>
-  <script src="../scripts/site-shell.js?v=20260529" defer></script>
-  <script src="../scripts/search-page.js?v=20260529" defer></script>
+  <link rel="stylesheet" href="../assets/styles.css?v=20260530" />
+  <link rel="stylesheet" href="../assets/portal.css?v=20260530" />
+  <script src="../data/chem-data.js?v=20260530" defer></script>
+  <script src="../data/reagent-extension.js?v=20260530" defer></script>
+  <script src="../data/research-data.js?v=20260530" defer></script>
+  <script src="../data/dossier-data.js?v=20260530" defer></script>
+  <script src="../data/method-data.js?v=20260530" defer></script>
+  <script src="../data/spectroscopy-data.js?v=20260530" defer></script>
+  <script src="../data/materials-data.js?v=20260530" defer></script>
+  <script src="../data/database-expansion.js?v=20260530" defer></script>
+  <script src="../data/external-sources.js?v=20260530" defer></script>
+  <script src="../scripts/site-shell.js?v=20260530" defer></script>
+  <script src="../scripts/search-page.js?v=20260530" defer></script>
 </head>
 <body class="page-shell">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -52,7 +53,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section search-studio-section">
       <div class="container search-workbench-grid">
         <aside class="page-panel search-control-panel">
           <form id="academicSearchForm">
@@ -62,6 +63,7 @@
             <select id="searchScope">
               <option value="all">All local records</option>
               <option value="reagent">Reagents</option>
+              <option value="compound">Compounds</option>
               <option value="material">Materials</option>
               <option value="route">Routes</option>
               <option value="mechanism">Mechanisms</option>
@@ -80,28 +82,25 @@
           </div>
         </aside>
 
-        <div class="search-results-stack">
+        <div class="search-output-grid">
+        <section class="result-panel local-results-panel">
           <div class="library-toolbar">
             <span class="label">Local ChemVault results</span>
             <strong id="searchSummary">0 local matches</strong>
           </div>
           <div class="local-result-grid" id="localSearchResults"></div>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <section class="section">
-      <div class="container">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">live enrichment</p>
-            <h2>NIH and PubChem data imported into this page</h2>
+        <section class="result-panel nih-import-panel" aria-live="polite">
+          <div class="library-toolbar">
+            <span class="label">NIH / PubChem imported data</span>
+            <button class="small-button" type="button" data-import-all hidden>Save all</button>
           </div>
-          <p>When the local index is thin, ChemVault requests public metadata from NIH/NLM E-utilities and PubChem PUG REST, then renders structured records here with source links.</p>
+          <div class="live-enrichment-status" id="liveEnrichmentStatus">Enter an academic query to import NIH/PubChem metadata into this page.</div>
+          <div class="live-enrichment-grid" id="liveEnrichmentResults"></div>
+          <div class="imported-records-panel" id="savedExternalRecords"></div>
+        </section>
         </div>
-        <div class="live-enrichment-status" id="liveEnrichmentStatus">Enter an academic query to enrich the local index.</div>
-        <div class="live-enrichment-grid" id="liveEnrichmentResults"></div>
-        <div class="imported-records-panel" id="savedExternalRecords"></div>
       </div>
     </section>
 

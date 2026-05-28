@@ -44,6 +44,12 @@
       body: [item.category, item.use, item.mechanism].filter(Boolean).join(" | "),
       href: `pages/reagents.html?id=${item.id}`
     }));
+    (data.compounds || []).forEach((item) => rows.push({
+      type: "Compound record",
+      title: item.name,
+      body: [item.formula, item.family, item.summary, ...(item.synonyms || [])].filter(Boolean).join(" | "),
+      href: `pages/search.html?q=${encode(item.name)}`
+    }));
     (materialsData.materials || []).forEach((item) => rows.push({
       type: "Material profile",
       title: item.name,
@@ -68,6 +74,7 @@
   function renderMetrics() {
     const metrics = {
       metricReagents: count(data.reagents),
+      metricCompounds: count(data.compounds),
       metricMaterials: count(materialsData.materials),
       metricMechanisms: count(data.mechanisms),
       metricSources: count(external.sources)

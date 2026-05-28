@@ -46,6 +46,7 @@
       const external = window.CHEMVAULT_EXTERNAL;
       const localHits = [
         ...(data?.reagents || []).map((item) => ({ type: "Reagent", title: `${item.formula} · ${item.name}`, body: item.focus, href: `reagents.html?id=${encodeURIComponent(item.id)}`, text: [item.formula, item.name, item.focus, item.category, ...item.tags].join(" ") })),
+        ...(data?.compounds || []).map((item) => ({ type: "Compound", title: `${item.formula} · ${item.name}`, body: item.summary, href: `search.html?q=${encodeURIComponent(item.name)}`, text: [item.formula, item.name, item.family, item.cas, item.summary, ...(item.synonyms || []), ...(item.tags || [])].join(" ") })),
         ...(research?.caseStudies || []).map((item) => ({ type: "Case", title: item.title, body: item.question, href: `research.html?case=${encodeURIComponent(item.id)}`, text: [item.title, item.discipline, item.question, item.thesis].join(" ") })),
         ...(dossiers?.dossiers || []).map((item) => ({ type: "Dossier", title: item.title, body: item.abstract, href: `dossiers.html?id=${encodeURIComponent(item.id)}`, text: [item.title, item.field, item.status, item.abstract, ...item.keywords, ...item.claims].join(" ") })),
         ...(methods?.protocols || []).map((item) => ({ type: "Method", title: item.title, body: item.summary, href: `methods.html?id=${encodeURIComponent(item.id)}`, text: [item.title, item.domain, item.level, item.summary, ...item.inputs, ...item.outputs].join(" ") })),
