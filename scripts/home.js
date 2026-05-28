@@ -19,21 +19,24 @@
       });
     }
 
-    const themeButton = $("[data-home-action='theme']");
+    const themeButton = $("[data-shell-action='theme'], [data-home-action='theme']");
     const savedTheme = localStorage.getItem("chemvault-theme");
     const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
     const initialTheme = savedTheme || (prefersLight ? "light" : "dark");
     document.body.classList.toggle("light-mode", initialTheme === "light");
 
     if (themeButton) {
-      themeButton.textContent = initialTheme === "light" ? "Dark" : "Light";
       themeButton.addEventListener("click", () => {
         const current = document.body.classList.contains("light-mode") ? "dark" : "light";
         document.body.classList.toggle("light-mode", current === "light");
         localStorage.setItem("chemvault-theme", current);
-        themeButton.textContent = current === "light" ? "Dark" : "Light";
       });
     }
+
+    document.querySelectorAll(".site-nav a").forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      link.toggleAttribute("aria-current", href.endsWith("index.html"));
+    });
   }
 
   function localIndex() {
@@ -127,6 +130,42 @@
     `;
   }
 
+  function wireTopbarSearch() {
+    const input = $("#shellSearch");
+    const panel = $("#shellSearchResults");
+    if (!input || !panel) return;
+    input.addEventListener("input", () => {
+      const rawQuery = input.value.trim();
+      const term = normalise(rawQuery);
+      if (!term) {
+        panel.classList.remove("active");
+        panel.innerHTML = "";
+        return;
+      }
+
+      const localHits = localIndex()
+        .filter((item) => normalise(`${item.title} ${item.type} ${item.body}`).includes(term))
+        .slice(0, 6)
+        .map((item) => ({ ...item, external: false }));
+      const externalHits = (external.sources || []).slice(0, 4).map((source) => ({
+        type: "External",
+        title: `Search ${source.name}`,
+        body: source.bestFor,
+        href: externalUrl(source, rawQuery),
+        external: true
+      }));
+      const hits = [...localHits, ...externalHits].slice(0, 8);
+      panel.classList.add("active");
+      panel.innerHTML = hits.length ? hits.map((hit) => `
+        <a class="search-hit" href="${hit.href}"${hit.external ? ' target="_blank" rel="noreferrer"' : ""}>
+          <span>${escapeHTML(hit.type)}</span>
+          <strong>${escapeHTML(hit.title)}</strong>
+          <small>${escapeHTML(hit.body)}</small>
+        </a>
+      `).join("") : `<div class="empty-state">No matching academic record.</div>`;
+    });
+  }
+
   function initSearch() {
     const form = $("#homeSearchForm");
     const input = $("#homeSearch");
@@ -158,5 +197,16 @@
     initShell();
     renderMetrics();
     initSearch();
+    wireTopbarSearch();
   });
+
+  function escapeHTML(value) {
+    return String(value || "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;"
+    }[char]));
+  }
 })();

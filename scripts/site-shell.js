@@ -80,7 +80,8 @@
     const current = location.pathname.split("/").pop() || "index.html";
     document.querySelectorAll(".site-nav a").forEach((link) => {
       const href = link.getAttribute("href") || "";
-      link.toggleAttribute("aria-current", href.endsWith(current));
+      const file = href.split("/").pop() || "index.html";
+      link.toggleAttribute("aria-current", file === current);
     });
   }
 

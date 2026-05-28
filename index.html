@@ -11,19 +11,19 @@
   <meta property="og:type" content="website" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="assets/styles.css?v=20260531" />
-  <link rel="stylesheet" href="assets/portal.css?v=20260531" />
-  <script src="data/chem-data.js?v=20260531" defer></script>
-  <script src="data/reagent-extension.js?v=20260531" defer></script>
-  <script src="data/research-data.js?v=20260531" defer></script>
-  <script src="data/dossier-data.js?v=20260531" defer></script>
-  <script src="data/method-data.js?v=20260531" defer></script>
-  <script src="data/spectroscopy-data.js?v=20260531" defer></script>
-  <script src="data/materials-data.js?v=20260531" defer></script>
-  <script src="data/database-expansion.js?v=20260531" defer></script>
-  <script src="data/reagent-megalibrary.js?v=20260531" defer></script>
-  <script src="data/external-sources.js?v=20260531" defer></script>
-  <script src="scripts/home.js?v=20260531" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20260532" />
+  <link rel="stylesheet" href="assets/portal.css?v=20260532" />
+  <script src="data/chem-data.js?v=20260532" defer></script>
+  <script src="data/reagent-extension.js?v=20260532" defer></script>
+  <script src="data/research-data.js?v=20260532" defer></script>
+  <script src="data/dossier-data.js?v=20260532" defer></script>
+  <script src="data/method-data.js?v=20260532" defer></script>
+  <script src="data/spectroscopy-data.js?v=20260532" defer></script>
+  <script src="data/materials-data.js?v=20260532" defer></script>
+  <script src="data/database-expansion.js?v=20260532" defer></script>
+  <script src="data/reagent-megalibrary.js?v=20260532" defer></script>
+  <script src="data/external-sources.js?v=20260532" defer></script>
+  <script src="scripts/home.js?v=20260532" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -34,7 +34,7 @@
         <span class="brand-mark">CV</span>
         <span>
           <strong>ChemVault</strong>
-          <small>research chemistry portal</small>
+          <small>academic portal</small>
         </span>
       </a>
 
@@ -43,6 +43,7 @@
       </button>
 
       <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
         <a href="pages/search.html">Search</a>
         <a href="pages/research.html">Research</a>
         <a href="pages/dossiers.html">Dossiers</a>
@@ -55,10 +56,11 @@
       </nav>
 
       <div class="header-actions">
-        <a class="small-button" href="pages/search.html">Open Search</a>
-        <button class="small-button" type="button" data-home-action="theme">Theme</button>
+        <label class="search-shell" for="shellSearch"><span>Search</span><input id="shellSearch" type="search" placeholder="Search local records..." /></label>
+        <button class="small-button" type="button" data-shell-action="theme">Theme</button>
       </div>
     </div>
+    <div class="container shell-search-results" id="shellSearchResults" aria-live="polite"></div>
   </header>
 
   <main id="main">
