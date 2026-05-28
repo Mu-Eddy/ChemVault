@@ -1,5 +1,4 @@
 # ChemVault
-# ChemVault
 
 ChemVault is an experimental chemistry-focused research portal and digital archive built using static web technologies and deployed globally through Cloudflare Workers.
 
