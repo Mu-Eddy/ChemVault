@@ -6,6 +6,10 @@
   const spectroscopy = window.CHEMVAULT_SPECTROSCOPY || {};
   const materials = window.CHEMVAULT_MATERIALS || {};
   const external = window.CHEMVAULT_EXTERNAL || { sources: [] };
+  const importedStoreKey = "chemvault-imported-records";
+  const liveCache = new Map();
+  let liveController = null;
+  let latestLiveCandidates = [];
   const $ = (selector) => document.querySelector(selector);
   const esc = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -25,6 +29,7 @@
 
   function buildIndex() {
     const rows = [];
+    getImportedRecords().forEach((item) => rows.push(item));
     (data.reagents || []).forEach((item) => rows.push({
       type: "Reagent",
       title: item.name,
@@ -147,30 +152,329 @@
           <p>The query is outside the current curated ChemVault index. Use the external academic sources below for NIH/NCBI, NIST, terminology, and DOI-level discovery.</p>
         </div>
       `;
-      return;
+      return 0;
     }
 
     panel.innerHTML = rows.map((item) => `
-      <a class="local-result-card" href="${item.href}">
+      <a class="local-result-card" href="${item.href}"${item.external ? ' target="_blank" rel="noreferrer"' : ""}>
         <span class="eyebrow">${esc(item.type)}</span>
         <strong>${esc(item.title)}</strong>
         <span>${esc(item.body).slice(0, 260)}${item.body.length > 260 ? "..." : ""}</span>
       </a>
     `).join("");
+    return rows.length;
   }
 
   function runSearch() {
     const input = $("#academicSearch");
     const scope = $("#searchScope");
     const query = input ? input.value.trim() : "";
-    renderLocal(query, scope ? scope.value : "all");
+    const localCount = renderLocal(query, scope ? scope.value : "all");
     renderExternal(query);
+    runLiveEnrichment(query, localCount);
     const url = new URL(window.location.href);
     if (query) url.searchParams.set("q", query);
     else url.searchParams.delete("q");
     if (scope && scope.value !== "all") url.searchParams.set("scope", scope.value);
     else url.searchParams.delete("scope");
     window.history.replaceState({}, "", url);
+  }
+
+  async function runLiveEnrichment(query, localCount) {
+    const status = $("#liveEnrichmentStatus");
+    const panel = $("#liveEnrichmentResults");
+    if (!status || !panel) return;
+
+    if (liveController) liveController.abort();
+    latestLiveCandidates = [];
+    if (!query || query.length < 3) {
+      status.textContent = "Enter at least three characters to request NIH and PubChem enrichment.";
+      panel.innerHTML = "";
+      renderImportedRecords();
+      return;
+    }
+
+    const cacheKey = normalise(query);
+    if (liveCache.has(cacheKey)) {
+      renderLiveResults(query, localCount, liveCache.get(cacheKey));
+      return;
+    }
+
+    liveController = new AbortController();
+    status.textContent = localCount
+      ? "Local records found. Fetching external metadata for stronger scholarly context..."
+      : "No strong local record. Searching NIH/NLM and PubChem public metadata...";
+    panel.innerHTML = `<div class="empty-state">Requesting PubChem compound data and PubMed article metadata...</div>`;
+
+    try {
+      const [compoundResult, literatureResult] = await Promise.allSettled([
+        fetchPubChem(query, liveController.signal),
+        fetchPubMed(query, liveController.signal)
+      ]);
+      if (compoundResult.status === "rejected" && literatureResult.status === "rejected") {
+        throw compoundResult.reason;
+      }
+      const compound = compoundResult.status === "fulfilled" ? compoundResult.value : null;
+      const literature = literatureResult.status === "fulfilled" ? literatureResult.value : [];
+      const result = { compound, literature };
+      liveCache.set(cacheKey, result);
+      renderLiveResults(query, localCount, result);
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      status.textContent = "External enrichment is temporarily unavailable.";
+      panel.innerHTML = `<div class="empty-state">The local page remains usable. Continue with the source links below if NIH/PubChem rate limits or network policy block live retrieval.</div>`;
+    }
+  }
+
+  async function fetchPubChem(query, signal) {
+    const propertyList = [
+      "Title",
+      "MolecularFormula",
+      "MolecularWeight",
+      "IUPACName",
+      "CanonicalSMILES",
+      "ConnectivitySMILES",
+      "IsomericSMILES",
+      "InChIKey",
+      "XLogP",
+      "TPSA",
+      "HBondDonorCount",
+      "HBondAcceptorCount",
+      "RotatableBondCount",
+      "ExactMass"
+    ].join(",");
+    const name = encodeURIComponent(query);
+    const propertiesUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${name}/property/${propertyList}/JSON`;
+    const properties = await fetchJSON(propertiesUrl, signal, true);
+    const compound = properties?.PropertyTable?.Properties?.[0];
+    if (!compound?.CID) return null;
+
+    const [descriptionResult, synonymResult] = await Promise.allSettled([
+      fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${compound.CID}/description/JSON`, signal, true),
+      fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${compound.CID}/synonyms/JSON`, signal, true)
+    ]);
+
+    const description = descriptionResult.status === "fulfilled"
+      ? descriptionResult.value?.InformationList?.Information?.[0]?.Description
+      : "";
+    const synonyms = synonymResult.status === "fulfilled"
+      ? synonymResult.value?.InformationList?.Information?.[0]?.Synonym?.slice(0, 8) || []
+      : [];
+
+    return {
+      source: "PubChem",
+      cid: compound.CID,
+      title: compound.Title || query,
+      formula: compound.MolecularFormula,
+      weight: compound.MolecularWeight,
+      iupac: compound.IUPACName,
+      smiles: compound.CanonicalSMILES || compound.ConnectivitySMILES || compound.IsomericSMILES || compound.SMILES,
+      inchikey: compound.InChIKey,
+      exactMass: compound.ExactMass,
+      xlogp: compound.XLogP,
+      tpsa: compound.TPSA,
+      donors: compound.HBondDonorCount,
+      acceptors: compound.HBondAcceptorCount,
+      rotatable: compound.RotatableBondCount,
+      description,
+      synonyms,
+      href: `https://pubchem.ncbi.nlm.nih.gov/compound/${compound.CID}`
+    };
+  }
+
+  async function fetchPubMed(query, signal) {
+    const term = encode(query);
+    const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${term}&retmode=json&retmax=5&sort=relevance&tool=ChemVault`;
+    const search = await fetchJSON(searchUrl, signal, false);
+    const ids = search?.esearchresult?.idlist || [];
+    if (!ids.length) return [];
+
+    const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids.join(",")}&retmode=json&tool=ChemVault`;
+    const summary = await fetchJSON(summaryUrl, signal, false);
+    return ids.map((id) => {
+      const item = summary?.result?.[id] || {};
+      const doi = (item.articleids || []).find((articleId) => articleId.idtype === "doi")?.value;
+      return {
+        source: "PubMed",
+        pmid: id,
+        title: item.title || `PubMed record ${id}`,
+        journal: item.fulljournalname || item.source || "PubMed",
+        date: item.pubdate || item.epubdate || "",
+        authors: (item.authors || []).slice(0, 4).map((author) => author.name).filter(Boolean),
+        doi,
+        href: `https://pubmed.ncbi.nlm.nih.gov/${id}/`
+      };
+    });
+  }
+
+  async function fetchJSON(url, signal, allowNotFound) {
+    const response = await fetch(url, { signal, headers: { Accept: "application/json" } });
+    if (!response.ok) {
+      if (allowNotFound && response.status === 404) return null;
+      throw new Error(`Request failed: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  function renderLiveResults(query, localCount, result) {
+    const status = $("#liveEnrichmentStatus");
+    const panel = $("#liveEnrichmentResults");
+    const cards = [];
+    latestLiveCandidates = [];
+
+    if (result.compound) {
+      const compound = result.compound;
+      latestLiveCandidates.push(toImportedCompound(compound, query));
+      cards.push(`
+        <article class="live-card live-card-wide">
+          <div class="live-card-head">
+            <span class="eyebrow">PubChem compound import</span>
+            <a href="${compound.href}" target="_blank" rel="noreferrer">CID ${esc(compound.cid)}</a>
+          </div>
+          <h3>${esc(compound.title)}</h3>
+          <div class="compound-property-grid">
+            ${property("Formula", compound.formula)}
+            ${property("Molecular weight", compound.weight)}
+            ${property("Exact mass", compound.exactMass)}
+            ${property("XLogP", compound.xlogp)}
+            ${property("TPSA", compound.tpsa)}
+            ${property("H donors", compound.donors)}
+            ${property("H acceptors", compound.acceptors)}
+            ${property("Rotatable bonds", compound.rotatable)}
+          </div>
+          ${compound.iupac ? `<p><strong>IUPAC:</strong> ${esc(compound.iupac)}</p>` : ""}
+          ${compound.smiles ? `<p><strong>Canonical SMILES:</strong> <code>${esc(compound.smiles)}</code></p>` : ""}
+          ${compound.description ? `<p>${esc(compound.description).slice(0, 420)}${compound.description.length > 420 ? "..." : ""}</p>` : ""}
+          ${compound.synonyms.length ? `<div class="tag-row">${compound.synonyms.map((item) => `<span class="tag">${esc(item)}</span>`).join("")}</div>` : ""}
+          <button class="secondary-button" type="button" data-import-external="0">Save compound to local session</button>
+        </article>
+      `);
+    }
+
+    (result.literature || []).forEach((article) => {
+      const index = latestLiveCandidates.push(toImportedArticle(article, query)) - 1;
+      cards.push(`
+        <article class="live-card">
+          <div class="live-card-head">
+            <span class="eyebrow">PubMed article metadata</span>
+            <a href="${article.href}" target="_blank" rel="noreferrer">PMID ${esc(article.pmid)}</a>
+          </div>
+          <h3>${esc(article.title)}</h3>
+          <p>${esc(article.journal)}${article.date ? ` · ${esc(article.date)}` : ""}</p>
+          ${article.authors.length ? `<p><strong>Authors:</strong> ${esc(article.authors.join(", "))}</p>` : ""}
+          ${article.doi ? `<p><strong>DOI:</strong> ${esc(article.doi)}</p>` : ""}
+          <button class="secondary-button" type="button" data-import-external="${index}">Save article to local session</button>
+        </article>
+      `);
+    });
+
+    const count = cards.length;
+    status.textContent = count
+      ? `${count} external records rendered for "${query}". ${localCount ? "Use them to extend the local context." : "These records fill the local database gap for this query."}`
+      : `No PubChem compound or PubMed article metadata returned for "${query}". Use the outbound database links below.`;
+    panel.innerHTML = cards.length ? cards.join("") : `<div class="empty-state">No external metadata was returned for this query.</div>`;
+    wireImportButtons();
+    renderImportedRecords();
+  }
+
+  function property(label, value) {
+    if (value === undefined || value === null || value === "") return "";
+    return `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+  }
+
+  function toImportedCompound(compound, query) {
+    return {
+      id: `pubchem-${compound.cid}`,
+      type: "Imported compound",
+      title: compound.title,
+      body: [
+        "PubChem",
+        compound.formula,
+        compound.weight ? `${compound.weight} g/mol` : "",
+        compound.iupac,
+        compound.description
+      ].filter(Boolean).join(" | "),
+      tags: [query, "PubChem", compound.formula, compound.inchikey].filter(Boolean),
+      href: compound.href,
+      external: true,
+      importedAt: new Date().toISOString()
+    };
+  }
+
+  function toImportedArticle(article, query) {
+    return {
+      id: `pubmed-${article.pmid}`,
+      type: "Imported article",
+      title: article.title,
+      body: [
+        "PubMed",
+        article.journal,
+        article.date,
+        article.authors.join(", "),
+        article.doi ? `DOI ${article.doi}` : ""
+      ].filter(Boolean).join(" | "),
+      tags: [query, "PubMed", article.pmid, article.doi].filter(Boolean),
+      href: article.href,
+      external: true,
+      importedAt: new Date().toISOString()
+    };
+  }
+
+  function wireImportButtons() {
+    document.querySelectorAll("[data-import-external]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const item = latestLiveCandidates[Number(button.dataset.importExternal)];
+        if (!item) return;
+        saveImportedRecord(item);
+        button.textContent = "Saved to local session";
+      });
+    });
+  }
+
+  function getImportedRecords() {
+    try {
+      const records = JSON.parse(localStorage.getItem(importedStoreKey) || "[]");
+      return Array.isArray(records) ? records : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveImportedRecord(item) {
+    const records = getImportedRecords();
+    const next = [item, ...records.filter((record) => record.id !== item.id)].slice(0, 40);
+    try {
+      localStorage.setItem(importedStoreKey, JSON.stringify(next));
+    } catch {
+      return;
+    }
+    renderImportedRecords();
+    renderLocal($("#academicSearch")?.value.trim() || "", $("#searchScope")?.value || "all");
+  }
+
+  function renderImportedRecords() {
+    const panel = $("#savedExternalRecords");
+    if (!panel) return;
+    const records = getImportedRecords();
+    if (!records.length) {
+      panel.innerHTML = "";
+      return;
+    }
+    panel.innerHTML = `
+      <div class="library-toolbar">
+        <span class="label">Session imports</span>
+        <strong>${records.length} saved</strong>
+      </div>
+      <button class="small-button" type="button" data-clear-imports>Clear session imports</button>
+      <div class="imported-record-list">
+        ${records.slice(0, 8).map((record) => `
+          <a href="${record.href}" target="_blank" rel="noreferrer">
+            <span>${esc(record.type)}</span>
+            <strong>${esc(record.title)}</strong>
+          </a>
+        `).join("")}
+      </div>
+    `;
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -188,9 +492,17 @@
       });
     }
     if (scope) scope.addEventListener("change", runSearch);
+    document.addEventListener("click", (event) => {
+      const clearButton = event.target.closest("[data-clear-imports]");
+      if (!clearButton) return;
+      localStorage.removeItem(importedStoreKey);
+      renderImportedRecords();
+      runSearch();
+    });
+
     if (input) input.addEventListener("input", () => {
       window.clearTimeout(input._chemvaultTimer);
-      input._chemvaultTimer = window.setTimeout(runSearch, 140);
+      input._chemvaultTimer = window.setTimeout(runSearch, 750);
     });
     runSearch();
   });

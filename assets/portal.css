@@ -454,6 +454,117 @@ body.light-mode .graph-board {
   min-height: 148px;
 }
 
+.live-enrichment-status {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  padding: 12px 14px;
+}
+
+.live-enrichment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.live-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(145deg, rgba(232, 188, 85, 0.055), transparent 46%),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+  padding: 15px;
+  box-shadow: var(--shadow);
+  overflow-wrap: anywhere;
+}
+
+.live-card-wide {
+  grid-column: 1 / -1;
+}
+
+.live-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.live-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.live-card code {
+  color: var(--text);
+  font-size: 0.86rem;
+  white-space: normal;
+}
+
+.live-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.live-card-head a {
+  color: var(--teal);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.compound-property-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.compound-property-grid div {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 9px;
+  background: rgba(255, 255, 255, 0.035);
+  min-width: 0;
+}
+
+.compound-property-grid span,
+.imported-record-list span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.compound-property-grid strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.imported-records-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.imported-record-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.imported-record-list a {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+  padding: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1080px) {
   .portal-grid,
   .source-browser-grid,
@@ -489,6 +600,9 @@ body.light-mode .graph-board {
   .shell-search-results,
   .gateway-grid,
   .local-result-grid,
+  .live-enrichment-grid,
+  .compound-property-grid,
+  .imported-record-list,
   .home-metric-grid,
   .home-search-row {
     grid-template-columns: 1fr;
