@@ -212,7 +212,7 @@
     status.textContent = localCount
       ? "Local records found. Fetching external metadata for stronger scholarly context..."
       : "No strong local record. Searching NIH/NLM and PubChem public metadata...";
-    panel.innerHTML = `<div class="empty-state">Requesting PubChem compound data and PubMed article metadata...</div>`;
+    panel.innerHTML = fallbackCards(query, "Requesting PubChem compound data and PubMed article metadata...");
 
     try {
       const [compoundResult, literatureResult] = await Promise.allSettled([
@@ -230,7 +230,7 @@
     } catch (error) {
       if (error.name === "AbortError") return;
       status.textContent = "External enrichment is temporarily unavailable.";
-      panel.innerHTML = `<div class="empty-state">The local page remains usable. Continue with the source links below if NIH/PubChem rate limits or network policy block live retrieval.</div>`;
+      panel.innerHTML = fallbackCards(query, "Live import is blocked or temporarily unavailable. Use these direct NIH/PubChem links.");
     }
   }
 
@@ -354,7 +354,10 @@
           ${compound.smiles ? `<p><strong>Canonical SMILES:</strong> <code>${esc(compound.smiles)}</code></p>` : ""}
           ${compound.description ? `<p>${esc(compound.description).slice(0, 420)}${compound.description.length > 420 ? "..." : ""}</p>` : ""}
           ${compound.synonyms.length ? `<div class="tag-row">${compound.synonyms.map((item) => `<span class="tag">${esc(item)}</span>`).join("")}</div>` : ""}
-          <button class="secondary-button" type="button" data-import-external="0">Save compound to local session</button>
+          <div class="source-action-row">
+            <a class="secondary-button" href="${compound.href}" target="_blank" rel="noopener noreferrer">Open NIH PubChem</a>
+            <button class="secondary-button" type="button" data-import-external="0">Save compound</button>
+          </div>
         </article>
       `);
     }
@@ -371,7 +374,10 @@
           <p>${esc(article.journal)}${article.date ? ` · ${esc(article.date)}` : ""}</p>
           ${article.authors.length ? `<p><strong>Authors:</strong> ${esc(article.authors.join(", "))}</p>` : ""}
           ${article.doi ? `<p><strong>DOI:</strong> ${esc(article.doi)}</p>` : ""}
-          <button class="secondary-button" type="button" data-import-external="${index}">Save article to local session</button>
+          <div class="source-action-row">
+            <a class="secondary-button" href="${article.href}" target="_blank" rel="noopener noreferrer">Open NIH PubMed</a>
+            <button class="secondary-button" type="button" data-import-external="${index}">Save article</button>
+          </div>
         </article>
       `);
     });
@@ -380,7 +386,7 @@
     status.textContent = count
       ? `${count} external records rendered for "${query}". ${localCount ? "Use them to extend the local context." : "These records fill the local database gap for this query."}`
       : `No PubChem compound or PubMed article metadata returned for "${query}". Use the outbound database links below.`;
-    panel.innerHTML = cards.length ? cards.join("") : `<div class="empty-state">No external metadata was returned for this query.</div>`;
+    panel.innerHTML = cards.length ? cards.join("") : fallbackCards(query, "No metadata was returned. Use direct NIH/PubChem search links.");
     toggleImportAll(Boolean(latestLiveCandidates.length));
     wireImportButtons();
     renderImportedRecords();
@@ -389,6 +395,28 @@
   function property(label, value) {
     if (value === undefined || value === null || value === "") return "";
     return `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+  }
+
+  function fallbackCards(query, message) {
+    const q = encode(query);
+    const links = [
+      ["NIH PubChem", `https://pubchem.ncbi.nlm.nih.gov/#query=${q}`, "Compound identifiers, formulae, synonyms and property records."],
+      ["NIH PubMed", `https://pubmed.ncbi.nlm.nih.gov/?term=${q}`, "Biomedical and chemical literature metadata."],
+      ["PubMed Central", `https://pmc.ncbi.nlm.nih.gov/?term=${q}`, "Open-access full-text records where available."],
+      ["NCBI Bookshelf", `https://www.ncbi.nlm.nih.gov/books/?term=${q}`, "Reference chapters and background material."]
+    ];
+    return `
+      <div class="empty-state">${esc(message)}</div>
+      <div class="fallback-source-grid">
+        ${links.map(([title, href, body]) => `
+          <a class="fallback-source-card" href="${href}" target="_blank" rel="noopener noreferrer">
+            <span class="eyebrow">direct external link</span>
+            <strong>${esc(title)}</strong>
+            <span>${esc(body)}</span>
+          </a>
+        `).join("")}
+      </div>
+    `;
   }
 
   function toImportedCompound(compound, query) {

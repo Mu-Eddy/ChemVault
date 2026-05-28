@@ -552,6 +552,13 @@ body.light-mode .graph-board {
   font-weight: 800;
 }
 
+.source-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .compound-property-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -601,6 +608,36 @@ body.light-mode .graph-board {
   overflow-wrap: anywhere;
 }
 
+.fallback-source-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.fallback-source-card {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+  padding: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.fallback-source-card:hover,
+.fallback-source-card:focus-visible {
+  border-color: var(--strong-line);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.fallback-source-card span:last-child {
+  color: var(--muted);
+}
+
 @media (max-width: 1080px) {
   .portal-grid,
   .source-browser-grid,
@@ -641,6 +678,7 @@ body.light-mode .graph-board {
   .live-enrichment-grid,
   .compound-property-grid,
   .imported-record-list,
+  .fallback-source-grid,
   .home-metric-grid,
   .home-search-row {
     grid-template-columns: 1fr;
