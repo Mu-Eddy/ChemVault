@@ -145,10 +145,10 @@ Planned future features include:
 
 # Author
 
-Edward Mu
+Ziwen Mu
 
 University of Manchester
-Chemistry & Computational Research Interests
+FSE ｜ Department of Chemistry
 
 ---
 
