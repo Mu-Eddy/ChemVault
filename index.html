@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChemVault | Advanced Chemistry Workspace</title>
+  <meta name="description" content="ChemVault is a privacy-focused chemistry workspace with reagent intelligence, mechanism maps, spectroscopy tools, calculators, element references and local study notes." />
+  <meta name="theme-color" content="#080a0a" />
+  <meta property="og:title" content="ChemVault | Advanced Chemistry Workspace" />
+  <meta property="og:description" content="A research-grade public chemistry workspace for evidence-backed learning, methods, spectroscopy, reagents and mechanism reasoning." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="assets/styles.css?v=20260528p" />
+  <link rel="stylesheet" href="assets/research.css?v=20260528p" />
+  <link rel="stylesheet" href="assets/portal.css?v=20260528p" />
+  <script src="data/chem-data.js?v=20260528p" defer></script>
+  <script src="data/reagent-extension.js?v=20260528p" defer></script>
+  <script src="data/research-data.js?v=20260528p" defer></script>
+  <script src="data/dossier-data.js?v=20260528p" defer></script>
+  <script src="data/method-data.js?v=20260528p" defer></script>
+  <script src="data/spectroscopy-data.js?v=20260528p" defer></script>
+  <script src="data/materials-data.js?v=20260528p" defer></script>
+  <script src="scripts/app.js?v=20260528p" defer></script>
+  <script src="scripts/research-desk.js?v=20260528p" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav-shell">
+      <a class="brand" href="#top" aria-label="ChemVault home">
+        <span class="brand-mark">CV</span>
+        <span>
+          <strong>ChemVault</strong>
+          <small>privacy chemistry workspace</small>
+        </span>
+      </a>
+
+      <button class="icon-button menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="pages/library.html">Library</a>
+        <a href="pages/research.html">Research Desk</a>
+        <a href="pages/dossiers.html">Dossiers</a>
+        <a href="pages/methods.html">Methods</a>
+        <a href="pages/spectroscopy.html">Spectroscopy</a>
+        <a href="pages/materials.html">Materials</a>
+        <a href="pages/reagents.html">Reagents</a>
+        <a href="pages/atlas.html">Atlas</a>
+        <a href="#spectra">Spectra</a>
+        <a href="#calculators">Calculators</a>
+        <a href="#study">Study</a>
+        <a href="#notebook">Notebook</a>
+      </nav>
+
+      <div class="header-actions">
+        <label class="search-shell" for="globalSearch">
+          <span>Search</span>
+          <input id="globalSearch" type="search" placeholder="NaBH4, SN2, 1715..." autocomplete="off" />
+        </label>
+        <button class="small-button" type="button" data-action="theme">Theme</button>
+      </div>
+    </div>
+    <div class="container search-results" id="globalResults" aria-live="polite"></div>
+  </header>
+
+  <main id="main">
+    <section class="workspace-hero" id="top">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">academic chemistry workspace · citation-aware · local data</p>
+          <h1>ChemVault</h1>
+          <p class="lead">A research-grade chemistry workspace: curated reagent intelligence, mechanistic argument maps, spectroscopy interpretation, calculation tools, research dossiers, academic terminology, source provenance and an onion-service-ready privacy posture.</p>
+
+          <div class="hero-actions">
+            <a class="primary-button" href="pages/research.html">Open dynamic portal</a>
+          <a class="secondary-button" href="pages/dossiers.html">Research dossiers</a>
+          <a class="secondary-button" href="pages/methods.html">Methods</a>
+          <a class="secondary-button" href="pages/library.html">Academic library</a>
+            <a class="secondary-button" href="pages/reagents.html">Reagent database</a>
+            <a class="secondary-button" href="#spectra">Analyze spectra</a>
+            <button class="secondary-button" type="button" data-action="random-reagent">Random reagent</button>
+          </div>
+
+          <div class="metric-strip" aria-label="ChemVault metrics">
+            <div><strong id="metricReagents">0</strong><span>reagents</span></div>
+            <div><strong id="metricMechanisms">0</strong><span>mechanisms</span></div>
+            <div><strong id="metricSpectra">0</strong><span>spectral signals</span></div>
+            <div><strong id="metricMaterials">0</strong><span>materials</span></div>
+            <div><strong id="metricSources">0</strong><span>source records</span></div>
+          </div>
+        </div>
+
+        <aside class="command-panel" aria-label="ChemVault command panel">
+          <div class="panel-toolbar">
+            <span class="status-dot"></span>
+            <span>local session active</span>
+            <code>127.0.0.1</code>
+          </div>
+          <canvas id="moleculeCanvas" width="760" height="430" aria-label="Animated molecular network"></canvas>
+          <div class="command-grid">
+            <div>
+              <span class="label">Current focus</span>
+              <strong id="focusReadout">Carbonyl reduction</strong>
+            </div>
+            <div>
+              <span class="label">Saved reagents</span>
+              <strong id="savedCount">0</strong>
+            </div>
+            <div>
+              <span class="label">Quiz accuracy</span>
+              <strong id="accuracyReadout">0%</strong>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section section-tint">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">multi-page academic portal</p>
+            <h2>Dynamic Pages</h2>
+          </div>
+          <p>The site now has dedicated pages for research casework, dossier files, methods, spectroscopy evidence, materials chemistry, reagent records, mechanism graphs and academic source browsing. The original homepage remains a full dashboard.</p>
+        </div>
+        <div class="portal-grid">
+          <a class="portal-card" href="pages/research.html"><span>case workspace</span><strong>Research Desk</strong><p>Multi-window case reasoning with evidence matrix, report draft, peer-review checklist and citation export.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/dossiers.html"><span>research files</span><strong>Research Dossiers</strong><p>Filterable project briefs with methods, observables, reproducibility notes, claims and limitation registers.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/methods.html"><span>reproducibility</span><strong>Methods Standard</strong><p>Claim audits, evidence grades, manuscript sections and protocol checklists for academic chemistry writing.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/spectroscopy.html"><span>evidence workbench</span><strong>Spectroscopy Cases</strong><p>IR, NMR and MS interpretation cases that separate observed signals from structural claims.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/materials.html"><span>materials atlas</span><strong>Materials Records</strong><p>Polymers, oxides, MOFs, carbon materials, hydrogels and battery materials with characterization evidence.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/reagents.html"><span>database view</span><strong>Reagent Records</strong><p>Searchable reagent records with scope, transformations, limitations, handling profile and route network context.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/atlas.html"><span>graph view</span><strong>Mechanism Atlas</strong><p>Interactive mechanism graph for rate laws, stereochemistry, substrate assumptions and failure modes.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/library.html"><span>source system</span><strong>Academic Library</strong><p>Browse IUPAC-style concepts, source families, evidence anchors and scholarly terminology records.</p><em>Open page</em></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="dossiers">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">research intelligence layer</p>
+            <h2>Dossier Console</h2>
+          </div>
+          <p>A compact scholarly dashboard for project files, methodological confidence, reproducibility status and publication-style next actions. It makes the homepage feel closer to a working research environment than a simple information page.</p>
+        </div>
+
+        <div class="dossier-console">
+          <article class="dossier-spotlight" id="dossierSpotlight"></article>
+          <aside class="method-ledger">
+            <div class="ledger-head">
+              <span class="label">Method ledger</span>
+              <strong>Active validation tools</strong>
+            </div>
+            <div class="method-list" id="methodLedger"></div>
+          </aside>
+          <aside class="publication-queue">
+            <div class="ledger-head">
+              <span class="label">Review queue</span>
+              <strong>Manuscript readiness</strong>
+            </div>
+            <div class="queue-list" id="reviewQueue"></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="materials">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">materials chemistry layer</p>
+            <h2>Materials Atlas Snapshot</h2>
+          </div>
+          <p>Materials are now treated as evidence-bearing records, not name-only examples. Each material connects synthesis history, characterization method, property axis, limitations and reagent precursors.</p>
+        </div>
+        <div class="materials-home-grid" id="materialsHomeGrid"></div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="methods">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">public scholarship layer</p>
+            <h2>Methods & Evidence Standards</h2>
+          </div>
+          <p>The public site now exposes its own scholarly operating rules: how claims are graded, how observations become inferences and what a reproducible chemistry note must contain.</p>
+        </div>
+        <div class="method-snapshot-grid">
+          <section class="scholar-panel">
+            <div class="matrix-head"><span class="label">Selected protocol</span><strong id="methodSnapshotTitle">Loading...</strong></div>
+            <div id="methodSnapshot"></div>
+            <a class="secondary-button" href="pages/methods.html">Open method standard</a>
+          </section>
+          <section class="scholar-panel">
+            <div class="matrix-head"><span class="label">Evidence rubric</span><strong>Claim grades</strong></div>
+            <div class="evidence-ladder" id="methodRubricHome"></div>
+          </section>
+          <section class="scholar-panel">
+            <div class="matrix-head"><span class="label">Spectral reasoning</span><strong id="spectroscopySnapshotTitle">Loading...</strong></div>
+            <div id="spectroscopySnapshot"></div>
+            <a class="secondary-button" href="pages/spectroscopy.html">Open spectroscopy workbench</a>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="research">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">module 00</p>
+            <h2>Research Desk</h2>
+          </div>
+          <p>A multi-window academic workspace for building defensible chemical arguments. Select a case file, inspect evidence, audit limitations, generate a citation-backed note and save it locally.</p>
+        </div>
+
+        <div class="research-shell">
+          <div class="research-topbar">
+            <label for="caseStudySelect">
+              <span>Case file</span>
+              <select id="caseStudySelect"></select>
+            </label>
+            <label for="citationStyle">
+              <span>Citation style</span>
+              <select id="citationStyle">
+                <option value="harvard">Harvard note</option>
+                <option value="vancouver">Numbered note</option>
+                <option value="lab">Lab notebook</option>
+              </select>
+            </label>
+            <div class="research-actions">
+              <button class="secondary-button" type="button" data-research-action="focus-all">Restore windows</button>
+              <button class="primary-button" type="button" data-research-action="save-note">Save academic note</button>
+            </div>
+          </div>
+
+          <div class="research-status" id="researchStatus"></div>
+
+          <div class="research-window-grid" id="researchWindowGrid">
+            <section class="research-window large" data-window="case">
+              <div class="window-titlebar">
+                <div><span>Case File</span><strong id="caseTitle">Loading...</strong></div>
+                <button type="button" class="text-button" data-research-action="toggle-window" data-window-target="case">collapse</button>
+              </div>
+              <div class="window-body" id="caseWindow"></div>
+            </section>
+
+            <section class="research-window" data-window="evidence">
+              <div class="window-titlebar">
+                <div><span>Evidence Matrix</span><strong>observations to claims</strong></div>
+                <button type="button" class="text-button" data-research-action="toggle-window" data-window-target="evidence">collapse</button>
+              </div>
+              <div class="window-body" id="evidenceWindow"></div>
+            </section>
+
+            <section class="research-window" data-window="argument">
+              <div class="window-titlebar">
+                <div><span>Mechanistic Argument</span><strong>claim, warrant, limits</strong></div>
+                <button type="button" class="text-button" data-research-action="toggle-window" data-window-target="argument">collapse</button>
+              </div>
+              <div class="window-body" id="argumentWindow"></div>
+            </section>
+
+            <section class="research-window" data-window="spectral">
+              <div class="window-titlebar">
+                <div><span>Spectral Evidence Board</span><strong>confidence scoring</strong></div>
+                <button type="button" class="text-button" data-research-action="toggle-window" data-window-target="spectral">collapse</button>
+              </div>
+              <div class="window-body" id="spectralWindow"></div>
+            </section>
+
+            <section class="research-window" data-window="citation">
+              <div class="window-titlebar">
+                <div><span>Citation Export</span><strong>source-backed note</strong></div>
+                <button type="button" class="text-button" data-research-action="toggle-window" data-window-target="citation">collapse</button>
+              </div>
+              <div class="window-body" id="citationWindow"></div>
+            </section>
+
+            <section class="research-window large" data-window="report">
+              <div class="window-titlebar">
+                <div><span>Academic Report Draft</span><strong>structured claim record</strong></div>
+                <button type="button" class="text-button" data-research-action="toggle-window" data-window-target="report">collapse</button>
+              </div>
+              <div class="window-body">
+                <textarea id="reportDraft" spellcheck="true"></textarea>
+              </div>
+            </section>
+
+            <section class="research-window" data-window="review">
+              <div class="window-titlebar">
+                <div><span>Peer Review Checklist</span><strong id="reviewScore">0 / 0</strong></div>
+                <button type="button" class="text-button" data-research-action="toggle-window" data-window-target="review">collapse</button>
+              </div>
+              <div class="window-body" id="reviewWindow"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="academic">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">academic layer</p>
+            <h2>Evidence, Terminology & Source Provenance</h2>
+          </div>
+          <p>ChemVault now separates claims from evidence. Concepts are mapped to terminology standards, data repositories and reproducible-procedure sources so the site reads more like a scholarly chemistry workspace than a revision sheet.</p>
+        </div>
+
+        <div class="academic-grid">
+          <aside class="control-panel">
+            <label for="conceptQuery">Concept search</label>
+            <input id="conceptQuery" type="search" placeholder="aromaticity, Beer-Lambert, electrophile" />
+            <label for="sourceFilter">Source family</label>
+            <select id="sourceFilter"></select>
+            <div class="concept-list" id="conceptList"></div>
+          </aside>
+
+          <article class="scholar-panel" id="conceptDetail">
+            <div class="empty-state">Select a concept to view its definition, equation, evidence notes and linked references.</div>
+          </article>
+
+          <aside class="scholar-panel">
+            <div class="matrix-head">
+              <span class="label">Evidence standard</span>
+              <strong>Claim ladder</strong>
+            </div>
+            <div class="evidence-ladder" id="evidenceLadder"></div>
+          </aside>
+        </div>
+
+        <div class="source-strip" id="sourceGrid" aria-label="Academic sources"></div>
+      </div>
+    </section>
+
+    <section class="section" id="reagents">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">module 01</p>
+            <h2>Reagent Intelligence Workbench</h2>
+          </div>
+          <p>Search by reagent, transformation, substrate, safety profile or exam trap. Save useful reagents locally and compare up to three side by side.</p>
+        </div>
+
+        <div class="workbench-layout">
+          <aside class="control-panel">
+            <label for="reagentQuery">Search library</label>
+            <input id="reagentQuery" type="search" placeholder="hydride, alkene, selective oxidation" autocomplete="off" />
+
+            <label for="categoryFilter">Category</label>
+            <select id="categoryFilter"></select>
+
+            <label for="riskFilter">Handling profile</label>
+            <select id="riskFilter">
+              <option value="all">All profiles</option>
+              <option value="standard">Standard teaching-lab caution</option>
+              <option value="dry">Dry or moisture-sensitive</option>
+              <option value="oxidizer">Oxidizer</option>
+              <option value="corrosive">Corrosive or acidic gas risk</option>
+            </select>
+
+            <div class="button-row">
+              <button class="secondary-button" type="button" data-action="show-saved">Saved</button>
+              <button class="secondary-button" type="button" data-action="clear-saved">Clear</button>
+            </div>
+
+            <div class="route-planner">
+              <h3>Route planner</h3>
+              <label for="routeStart">Starting motif</label>
+              <select id="routeStart"></select>
+              <label for="routeTarget">Target motif</label>
+              <select id="routeTarget"></select>
+              <button class="primary-button" type="button" data-action="plan-route">Plan route</button>
+              <div class="route-output" id="routeOutput">Choose a starting motif and target.</div>
+            </div>
+          </aside>
+
+          <div class="library-panel">
+            <div class="library-toolbar">
+              <div>
+                <span class="label">Library</span>
+                <strong id="libraryCount">0 matches</strong>
+              </div>
+              <div class="segmented" role="group" aria-label="Library view">
+                <button type="button" class="active" data-view="cards">Cards</button>
+                <button type="button" data-view="dense">Dense</button>
+              </div>
+            </div>
+            <div class="card-grid" id="reagentGrid"></div>
+          </div>
+
+          <aside class="detail-panel">
+            <div id="reagentDetail" class="detail-card"></div>
+            <div class="compare-card">
+              <div class="compare-head">
+                <h3>Compare</h3>
+                <button class="text-button" type="button" data-action="clear-compare">clear</button>
+              </div>
+              <div id="comparePanel"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="mechanisms">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">module 02</p>
+            <h2>Mechanism Atlas</h2>
+          </div>
+          <p>Mechanism cards are now connected to substrate preferences, stereochemical notes, rate law clues and step-by-step timelines.</p>
+        </div>
+        <div class="mechanism-layout">
+          <div class="mechanism-list" id="mechanismList"></div>
+          <div class="mechanism-detail" id="mechanismDetail"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="spectra">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">module 03</p>
+            <h2>Spectroscopy Interpreter</h2>
+          </div>
+          <p>Use the searchable reference table or paste observed signals to generate a first-pass functional-group interpretation.</p>
+        </div>
+
+        <div class="spectra-layout">
+          <aside class="control-panel">
+            <label for="spectraTechnique">Technique</label>
+            <select id="spectraTechnique"></select>
+            <label for="spectraQuery">Search signal or assignment</label>
+            <input id="spectraQuery" type="search" placeholder="1700, broad OH, aromatic" />
+            <label for="signalInput">Observed signals</label>
+            <textarea id="signalInput" placeholder="Example: IR 1715, broad 3300; 1H 9.8 singlet; 13C 205"></textarea>
+            <button class="primary-button" type="button" data-action="interpret-spectra">Interpret signals</button>
+            <div id="interpretationPanel" class="route-output">No interpretation yet.</div>
+          </aside>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Technique</th>
+                  <th>Signal</th>
+                  <th>Assignment</th>
+                  <th>High-value clue</th>
+                </tr>
+              </thead>
+              <tbody id="spectraTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="calculators">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">module 04</p>
+            <h2>Calculation Suite</h2>
+          </div>
+          <p>Lab-report calculators run entirely in the browser and keep a local history for quick checking.</p>
+        </div>
+
+        <div class="calculator-shell">
+          <div class="calculator-tabs" role="tablist" aria-label="Calculator selection">
+            <button type="button" class="active" data-calc="moles">Moles</button>
+            <button type="button" data-calc="dilution">Dilution</button>
+            <button type="button" data-calc="yield">Yield</button>
+            <button type="button" data-calc="beer">Beer-Lambert</button>
+            <button type="button" data-calc="ph">Weak acid pH</button>
+          </div>
+          <div class="calculator-grid">
+            <form class="calc-panel" id="calculatorForm"></form>
+            <aside class="calc-output">
+              <span class="label">Result</span>
+              <div id="calculatorOutput">Select a calculator and enter values.</div>
+              <div class="history-list" id="calcHistory"></div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="study">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">module 05</p>
+            <h2>Study Mode</h2>
+          </div>
+          <p>Practice mechanism and reagent recall with difficulty filters, instant feedback and persistent score tracking.</p>
+        </div>
+        <div class="study-layout">
+          <div class="quiz-card">
+            <div class="quiz-topline">
+              <span id="quizDifficulty">mixed</span>
+              <strong id="quizProgress">0 / 0</strong>
+            </div>
+            <h3 id="quizQuestion">Loading question...</h3>
+            <div id="quizOptions" class="quiz-options"></div>
+            <div class="button-row">
+              <button class="primary-button" type="button" data-action="next-quiz">Next</button>
+              <button class="secondary-button" type="button" data-action="reset-quiz">Reset</button>
+            </div>
+          </div>
+          <aside class="control-panel">
+            <label for="quizMode">Difficulty</label>
+            <select id="quizMode">
+              <option value="all">Mixed</option>
+              <option value="foundation">Foundation</option>
+              <option value="exam">Exam traps</option>
+              <option value="advanced">Advanced</option>
+            </select>
+            <div class="score-grid">
+              <div><strong id="scoreCorrect">0</strong><span>correct</span></div>
+              <div><strong id="scoreAttempted">0</strong><span>attempted</span></div>
+              <div><strong id="scoreStreak">0</strong><span>streak</span></div>
+            </div>
+            <div class="route-output" id="quizFeedback">Answer a question to see feedback.</div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="elements">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">module 06</p>
+            <h2>Element Field Guide</h2>
+          </div>
+          <p>A focused set of element cards for common organic, analytical and physical chemistry contexts.</p>
+        </div>
+        <div class="element-layout">
+          <aside class="control-panel">
+            <label for="elementQuery">Search element</label>
+            <input id="elementQuery" type="search" placeholder="carbon, halogen, transition metal" />
+            <label for="elementGroup">Group filter</label>
+            <select id="elementGroup"></select>
+            <div id="elementDetail" class="route-output">Select an element tile.</div>
+          </aside>
+          <div class="element-grid" id="elementGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="notebook">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">module 07</p>
+            <h2>Local Notebook & Submission Draft</h2>
+          </div>
+          <p>Store private study notes in localStorage and prepare anonymous chemistry questions before adding a real encrypted backend.</p>
+        </div>
+        <div class="notebook-layout">
+          <form class="control-panel" id="noteForm">
+            <label for="noteTitle">Note title</label>
+            <input id="noteTitle" type="text" placeholder="Carbonyl reductions" />
+            <label for="noteBody">Note</label>
+            <textarea id="noteBody" placeholder="Write a private study note. It stays in this browser."></textarea>
+            <button class="primary-button" type="submit">Save note</button>
+          </form>
+          <div class="notes-panel" id="notesPanel"></div>
+          <form class="control-panel" id="questionForm">
+            <label for="questionTopic">Question topic</label>
+            <select id="questionTopic">
+              <option>Organic chemistry</option>
+              <option>Physical chemistry</option>
+              <option>Spectroscopy</option>
+              <option>Lab data analysis</option>
+              <option>Other</option>
+            </select>
+            <label for="questionBody">Question draft</label>
+            <textarea id="questionBody" placeholder="Draft a question for the future encrypted Q&A backend."></textarea>
+            <button class="primary-button" type="submit">Prepare draft</button>
+            <div id="questionPreview" class="route-output">No draft prepared.</div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section safety-section">
+      <div class="container safety-grid">
+        <div>
+          <p class="eyebrow">deployment posture</p>
+          <h2>Privacy-first static architecture</h2>
+        </div>
+        <div class="safety-copy">
+          <p>This build uses local JavaScript data files and browser storage instead of external APIs. A future onion deployment can serve the same static assets behind Tor, then add a small backend only for encrypted submissions.</p>
+          <p>ChemVault is for legal education, revision and lab-report support. It is not a replacement for SDS documents, COSHH forms, supervisor instructions or local regulations.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="brand footer-brand">
+        <span class="brand-mark">CV</span>
+        <span>
+          <strong>ChemVault</strong>
+          <small>advanced static prototype</small>
+        </span>
+      </div>
+      <div class="footer-links">
+        <a href="pages/library.html">Library</a>
+        <a href="pages/research.html">Research Desk</a>
+        <a href="pages/dossiers.html">Dossiers</a>
+        <a href="pages/methods.html">Methods</a>
+        <a href="pages/spectroscopy.html">Spectroscopy</a>
+        <a href="pages/materials.html">Materials</a>
+        <a href="pages/reagents.html">Reagents</a>
+        <a href="pages/atlas.html">Atlas</a>
+        <a href="#spectra">Spectra</a>
+        <a href="#notebook">Notebook</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
