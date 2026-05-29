@@ -50,7 +50,8 @@
     const href = record.href || `record.html?type=${encode(type)}&id=${encode(record.id)}`;
     const external = /^https?:\/\//i.test(href);
     const raw = record.raw || {};
-    const source = raw.source || explicitDataSource || dataSourceFromRecord(record, fallbackSource);
+    const rawSource = raw.source || raw.raw?.source;
+    const source = rawSource || explicitDataSource || dataSourceFromRecord(record, fallbackSource);
     return {
       id: record.id,
       recordType: type,
@@ -70,16 +71,22 @@
       sourceKind: source === "Curated" || source === "D1" || source === "Fallback" ? "curated" : "imported",
       dataSource: source,
       imageUrl: record.imageUrl || record.image_url || record.raw?.imageUrl || "",
+      hazardStatements: record.hazardStatements || raw.hazardStatements || [],
+      hazardLevel: record.hazardLevel || raw.hazardLevel || "",
+      signalWord: record.signalWord || raw.signalWord || "",
+      precautionaryStatements: record.precautionaryStatements || raw.precautionaryStatements || [],
+      disposalMethod: record.disposalMethod || raw.disposalMethod || "",
+      safetySource: record.safetySource || raw.safetySource || "",
       checkStatus: record.checkStatus || raw.checkStatus || (raw.source ? "accepted" : source.toLowerCase()),
       checkedAt: record.checkedAt || raw.checkedAt || record.updatedAt || record.updated_at || "",
       raw,
       updatedAt: record.updatedAt || record.updated_at || "",
-      searchText: record.searchText || compact(`${typeLabel} ${record.title} ${record.subtitle || ""} ${body} ${record.formula || ""} ${(record.tags || []).join(" ")}`)
+      searchText: record.searchText || compact(`${typeLabel} ${record.title} ${record.subtitle || ""} ${body} ${record.formula || ""} ${(record.tags || []).join(" ")} ${(record.hazardStatements || raw.hazardStatements || []).join(" ")} ${record.disposalMethod || raw.disposalMethod || ""}`)
     };
   }
 
   function dataSourceFromRecord(record, fallbackSource) {
-    const rawSource = record.raw?.source;
+    const rawSource = record.raw?.source || record.raw?.raw?.source;
     if (rawSource === "PubChem" || rawSource === "PubMed") return rawSource;
     if (fallbackSource === "d1") return "D1";
     if (fallbackSource === "fallback" || fallbackSource === "browser-fallback") return "Fallback";
@@ -134,7 +141,10 @@
   function buildIndex() {
     const api = recordApi();
     if (api?.buildRecords) {
-      const rows = api.buildRecords({ includeImported: true }).map((record) => ({
+      const rows = api.buildRecords({ includeImported: true }).map((record) => {
+        const rawSource = record.raw?.source || record.raw?.raw?.source;
+        const dataSource = record.external ? "Session import" : rawSource === "PubChem" || rawSource === "PubMed" ? rawSource : "Curated";
+        return ({
         id: record.id,
         recordType: record.type,
         type: record.typeLabel || record.type,
@@ -151,13 +161,20 @@
         subtitle: record.subtitle || "",
         sourceHref: record.sourceHref || "",
         raw: record.raw || {},
+        hazardStatements: record.hazardStatements || record.raw?.hazardStatements || [],
+        hazardLevel: record.hazardLevel || record.raw?.hazardLevel || "",
+        signalWord: record.signalWord || record.raw?.signalWord || "",
+        precautionaryStatements: record.precautionaryStatements || record.raw?.precautionaryStatements || [],
+        disposalMethod: record.disposalMethod || record.raw?.disposalMethod || "",
+        safetySource: record.safetySource || record.raw?.safetySource || "",
         checkStatus: record.checkStatus || record.raw?.checkStatus || (record.raw?.source ? "accepted" : "curated"),
         checkedAt: record.checkedAt || record.raw?.checkedAt || "",
-        sourceKind: record.external ? "imported" : "curated",
-        dataSource: record.external ? "Session import" : "Curated",
+        sourceKind: record.external || dataSource === "PubChem" || dataSource === "PubMed" ? "imported" : "curated",
+        dataSource,
         imageUrl: record.imageUrl || record.raw?.imageUrl || "",
         searchText: record.searchText || compact(`${record.title} ${record.body} ${(record.tags || []).join(" ")}`)
-      }));
+      });
+      });
       return mergeIndexRows(rows, backendRecords);
     }
     const rows = [];
@@ -386,6 +403,7 @@
     const fallback = placeholderImage(item.type, item.title, item.family || item.domain || item.formula || "");
     const body = item.body || item.subtitle || "Checked academic metadata.";
     const tags = resultTags(item);
+    const hazards = hazardLines(item);
     return `
       <a class="local-result-card academic-result-item" href="${esc(focusRecordHref(item))}" data-record-key="${esc(key)}">
         <span class="result-thumb academic-result-media" aria-hidden="true">
@@ -399,6 +417,8 @@
           <strong class="result-title">${esc(item.title)}</strong>
           <span class="result-snippet">${esc(body).slice(0, 420)}${body.length > 420 ? "..." : ""}</span>
           ${item.formula ? `<span class="result-formula"><span>Formula</span><code>${esc(item.formula)}</code></span>` : ""}
+          ${item.hazardLevel ? `<span class="hazard-summary hazard-${esc(compact(item.hazardLevel))}"><strong>${esc(item.hazardLevel)}</strong>${hazards[0] ? `<span>${esc(hazards[0]).slice(0, 180)}</span>` : ""}</span>` : ""}
+          ${item.disposalMethod ? `<span class="disposal-summary"><strong>Disposal</strong><span>${esc(item.disposalMethod).slice(0, 180)}</span></span>` : ""}
           <span class="result-meta">${resultMeta(item).map(esc).join(" · ")}</span>
           ${tags.length ? `<span class="result-tag-row">${tags.map((tag) => `<span>${esc(tag)}</span>`).join("")}</span>` : ""}
           <span class="result-detail-link">View details</span>
@@ -427,9 +447,16 @@
       item.maturity ? `${item.maturity}% maturity` : "",
       item.raw?.cid ? `CID ${item.raw.cid}` : "",
       item.raw?.pmid ? `PMID ${item.raw.pmid}` : "",
+      item.hazardLevel ? `Hazard ${item.hazardLevel}` : "",
       item.checkStatus ? `checkStatus ${item.checkStatus}` : "",
       item.id ? `Record ${item.id}` : ""
     ].filter(Boolean);
+  }
+
+  function hazardLines(item) {
+    return (item.hazardStatements || item.raw?.hazardStatements || [])
+      .map((line) => String(line || "").trim())
+      .filter(Boolean);
   }
 
   function resultTags(item) {
@@ -631,9 +658,10 @@
     const compound = properties?.PropertyTable?.Properties?.[0];
     if (!compound?.CID) return null;
 
-    const [descriptionResult, synonymResult] = await Promise.allSettled([
+    const [descriptionResult, synonymResult, safetyResult] = await Promise.allSettled([
       fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${compound.CID}/description/JSON`, signal, true),
-      fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${compound.CID}/synonyms/JSON`, signal, true)
+      fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${compound.CID}/synonyms/JSON`, signal, true),
+      fetchPubChemSafety(compound.CID, signal, compound)
     ]);
 
     const description = descriptionResult.status === "fulfilled"
@@ -642,6 +670,7 @@
     const synonyms = synonymResult.status === "fulfilled"
       ? synonymResult.value?.InformationList?.Information?.[0]?.Synonym?.slice(0, 8) || []
       : [];
+    const safety = safetyResult.status === "fulfilled" ? safetyResult.value : {};
 
     return {
       source: "PubChem",
@@ -660,9 +689,61 @@
       rotatable: compound.RotatableBondCount,
       description,
       synonyms,
+      ...safety,
       imageUrl: `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${encodeURIComponent(compound.CID)}/PNG?record_type=2d&image_size=large`,
       href: `https://pubchem.ncbi.nlm.nih.gov/compound/${compound.CID}`
     };
+  }
+
+  async function fetchPubChemSafety(cid, signal, compound = {}) {
+    const ghs = await fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${encodeURIComponent(cid)}/JSON?heading=${encodeURIComponent("GHS Classification")}`, signal, true);
+    const infos = collectPubChemInfo(ghs);
+    const hazardStatements = infoStrings(infos.find((item) => item.Name === "GHS Hazard Statements")).slice(0, 6);
+    const signalWord = infoStrings(infos.find((item) => item.Name === "Signal"))[0] || "";
+    const precautionaryStatements = infoStrings(infos.find((item) => item.Name === "Precautionary Statement Codes")).slice(0, 2);
+    return {
+      hazardStatements,
+      hazardLevel: hazardLevelFrom(hazardStatements, signalWord),
+      signalWord,
+      precautionaryStatements,
+      disposalMethod: disposalFromHazards(hazardStatements, compound),
+      safetySource: "PubChem GHS summary"
+    };
+  }
+
+  function collectPubChemInfo(payload) {
+    const infos = [];
+    const walk = (section) => {
+      (section?.Information || []).forEach((item) => infos.push(item));
+      (section?.Section || []).forEach(walk);
+    };
+    walk(payload?.Record);
+    return infos;
+  }
+
+  function infoStrings(info) {
+    return info?.Value?.StringWithMarkup?.map((item) => item.String.trim()).filter(Boolean) || [];
+  }
+
+  function hazardLevelFrom(statements = [], signalWord = "") {
+    const text = `${signalWord} ${statements.join(" ")}`.toLowerCase();
+    if (/fatal|cancer|mutagen|reproductive|damage to organs|explosive|pyrophoric/.test(text)) return "Severe";
+    if (/toxic|corrosive|skin burns|serious eye damage|highly flammable|extremely flammable/.test(text)) return "High";
+    if (/harmful|irritation|drowsiness|dizziness|flammable/.test(text)) return "Moderate";
+    return statements.length ? "Low" : "Not classified";
+  }
+
+  function disposalFromHazards(statements = [], context = {}) {
+    const text = `${context.Title || context.title || ""} ${context.MolecularFormula || context.formula || ""} ${statements.join(" ")}`.toLowerCase();
+    if (/chlorinated|halogenated|chloroform|dichloromethane|methylene chloride|bromine|iodine|chlorine/.test(text)) return "Collect as halogenated or toxic hazardous waste in a compatible labelled container; do not pour to drain.";
+    if (/silver|copper|manganese|chrom|osmium|lead|mercury|cadmium|nickel|metal/.test(text)) return "Collect as heavy-metal or oxidizing inorganic hazardous waste; prevent drain release.";
+    if (/azide|cyanide|diazonium|energetic|explosive|pyrophoric/.test(text)) return "Collect as reactive/toxic hazardous waste and keep segregated under institutional EHS guidance.";
+    if (/corrosive|skin burns|serious eye damage/.test(text)) return "Collect as corrosive hazardous waste or neutralize only under an approved institutional procedure.";
+    if (/flammable|solvent|ether|acetone|ethanol|methanol|acetonitrile|tetrahydrofuran|ethyl acetate|dimethylformamide/.test(text) && !/oxidizer|hypochlorite|permanganate|nitrate|may intensify fire/.test(text)) return "Collect in a compatible flammable organic-waste container; do not pour to drain.";
+    if (/oxidizer|peroxide|may intensify fire/.test(text)) return "Collect as oxidizing hazardous waste; keep separate from organics and reducers.";
+    if (/flammable|solvent|ether|acetone|ethanol|methanol|acetonitrile|tetrahydrofuran|ethyl acetate|dimethylformamide/.test(text)) return "Collect in a compatible flammable organic-waste container; do not pour to drain.";
+    if (/toxic|cancer|mutagen|reproductive|damage to organs|fatal/.test(text)) return "Collect as toxic hazardous waste; keep segregated and route through institutional EHS.";
+    return "Dispose through approved chemical-waste channels according to SDS, institutional EHS guidance and local regulations.";
   }
 
   async function fetchPubMed(query, signal) {
@@ -826,11 +907,23 @@
       imageUrl: record.imageUrl,
       sourceHref: record.href,
       formula: record.formula || "",
+      hazardStatements: record.hazardStatements || record.raw?.hazardStatements || [],
+      hazardLevel: record.hazardLevel || record.raw?.hazardLevel || "",
+      signalWord: record.signalWord || record.raw?.signalWord || "",
+      precautionaryStatements: record.precautionaryStatements || record.raw?.precautionaryStatements || [],
+      disposalMethod: record.disposalMethod || record.raw?.disposalMethod || "",
+      safetySource: record.safetySource || record.raw?.safetySource || "",
       checkStatus: record.checkStatus || "accepted",
       checkedAt: record.checkedAt || record.importedAt || "",
       raw: {
         ...(record.raw || {}),
         source,
+        hazardStatements: record.hazardStatements || record.raw?.hazardStatements || [],
+        hazardLevel: record.hazardLevel || record.raw?.hazardLevel || "",
+        signalWord: record.signalWord || record.raw?.signalWord || "",
+        precautionaryStatements: record.precautionaryStatements || record.raw?.precautionaryStatements || [],
+        disposalMethod: record.disposalMethod || record.raw?.disposalMethod || "",
+        safetySource: record.safetySource || record.raw?.safetySource || "",
         checkStatus: record.checkStatus || record.raw?.checkStatus || "accepted",
         checkedAt: record.checkedAt || record.raw?.checkedAt || record.importedAt || ""
       }
@@ -904,12 +997,24 @@
       sourceHref: compound.href,
       formula: compound.formula || "",
       imageUrl: compound.imageUrl,
+      hazardStatements: compound.hazardStatements || [],
+      hazardLevel: compound.hazardLevel || "",
+      signalWord: compound.signalWord || "",
+      precautionaryStatements: compound.precautionaryStatements || [],
+      disposalMethod: compound.disposalMethod || "",
+      safetySource: compound.safetySource || "",
       raw: {
         source: "PubChem",
         cid: compound.cid,
         href: compound.href,
         formula: compound.formula,
         imageUrl: compound.imageUrl,
+        hazardStatements: compound.hazardStatements || [],
+        hazardLevel: compound.hazardLevel || "",
+        signalWord: compound.signalWord || "",
+        precautionaryStatements: compound.precautionaryStatements || [],
+        disposalMethod: compound.disposalMethod || "",
+        safetySource: compound.safetySource || "",
         checkStatus: "accepted",
         checkedAt: new Date().toISOString()
       },
@@ -964,6 +1069,12 @@
       sourceHref: record.sourceHref || record.href || "",
       imageUrl: record.imageUrl || record.raw?.imageUrl || "",
       raw: record.raw || {},
+      hazardStatements: record.hazardStatements || record.raw?.hazardStatements || [],
+      hazardLevel: record.hazardLevel || record.raw?.hazardLevel || "",
+      signalWord: record.signalWord || record.raw?.signalWord || "",
+      precautionaryStatements: record.precautionaryStatements || record.raw?.precautionaryStatements || [],
+      disposalMethod: record.disposalMethod || record.raw?.disposalMethod || "",
+      safetySource: record.safetySource || record.raw?.safetySource || "",
       checkStatus: record.checkStatus || record.raw?.checkStatus || "accepted",
       checkedAt: record.checkedAt || record.raw?.checkedAt || new Date().toISOString(),
       external: /^https?:\/\//i.test(record.href || ""),

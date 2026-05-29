@@ -1803,6 +1803,49 @@ body.light-mode {
   font-size: 0.82rem;
 }
 
+.page-shell .hazard-summary,
+.page-shell .disposal-summary {
+  display: grid;
+  gap: 3px;
+  max-width: 78ch;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #f5f5f7;
+  color: #424245;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
+.page-shell .hazard-summary strong,
+.page-shell .disposal-summary strong {
+  color: #1d1d1f;
+  font-size: 0.74rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.page-shell .hazard-severe {
+  border-color: rgba(180, 36, 36, 0.28);
+  background: rgba(180, 36, 36, 0.06);
+}
+
+.page-shell .hazard-high {
+  border-color: rgba(191, 90, 42, 0.3);
+  background: rgba(191, 90, 42, 0.07);
+}
+
+.page-shell .hazard-moderate {
+  border-color: rgba(176, 133, 0, 0.3);
+  background: rgba(176, 133, 0, 0.08);
+}
+
+.page-shell .hazard-low,
+.page-shell .hazard-not-classified {
+  border-color: rgba(81, 81, 84, 0.14);
+  background: #f5f5f7;
+}
+
 .page-shell .nih-import-panel {
   border-style: dashed;
   background: rgba(255, 255, 255, 0.7);

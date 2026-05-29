@@ -64,6 +64,8 @@
               ${fact("Source", sourceLabel(record))}
               ${fact("Domain", record.domain || record.family || record.category)}
               ${fact("Formula", record.formula)}
+              ${fact("Hazard", record.hazardLevel)}
+              ${fact("Signal", record.signalWord)}
               ${fact("Maturity", record.maturity ? `${record.maturity}%` : "")}
               ${fact("Risk", record.risk)}
               ${fact("Check status", record.checkStatus)}
@@ -98,6 +100,11 @@
                 ${field("formula", record.formula)}
                 ${field("tags", (record.tags || []).join(", "))}
                 ${field("body", record.body)}
+                ${field("hazardStatements", (record.hazardStatements || []).join(" | "))}
+                ${field("hazardLevel", record.hazardLevel)}
+                ${field("signalWord", record.signalWord)}
+                ${field("disposalMethod", record.disposalMethod)}
+                ${field("safetySource", record.safetySource)}
                 ${field("imageUrl", image, true)}
                 ${field("sourceHref", sourceHref, true)}
                 ${field("checkStatus", record.checkStatus)}
@@ -222,23 +229,30 @@
       body: record.body || record.subtitle || "",
       tags: record.tags || [],
       formula: record.formula || raw.formula || "",
+      hazardStatements: record.hazardStatements || raw.hazardStatements || [],
+      hazardLevel: record.hazardLevel || raw.hazardLevel || "",
+      signalWord: record.signalWord || raw.signalWord || "",
+      precautionaryStatements: record.precautionaryStatements || raw.precautionaryStatements || [],
+      disposalMethod: record.disposalMethod || raw.disposalMethod || "",
+      safetySource: record.safetySource || raw.safetySource || "",
       sourceHref,
       href: record.href || sourceHref,
       external: /^https?:\/\//i.test(record.href || sourceHref),
       imageUrl: record.imageUrl || raw.imageUrl || "",
-      dataSource: record.dataSource || raw.source || "Session import",
-      checkStatus: record.checkStatus || raw.checkStatus || (raw.source ? "accepted" : "Not available"),
+      dataSource: record.dataSource || raw.source || raw.raw?.source || "Session import",
+      checkStatus: record.checkStatus || raw.checkStatus || (raw.source || raw.raw?.source ? "accepted" : "Not available"),
       checkedAt: record.checkedAt || raw.checkedAt || "Not available",
       sections: [
         { title: "Tags", items: record.tags || [] },
-        { title: "Source metadata", items: [raw.cid ? `CID ${raw.cid}` : "", raw.pmid ? `PMID ${raw.pmid}` : "", raw.doi ? `DOI ${raw.doi}` : ""].filter(Boolean) }
+        { title: "Safety", items: [record.hazardLevel || raw.hazardLevel, ...(record.hazardStatements || raw.hazardStatements || []), record.disposalMethod || raw.disposalMethod].filter(Boolean) },
+        { title: "Source metadata", items: [raw.cid || raw.raw?.cid ? `CID ${raw.cid || raw.raw?.cid}` : "", raw.pmid ? `PMID ${raw.pmid}` : "", raw.doi ? `DOI ${raw.doi}` : ""].filter(Boolean) }
       ],
       raw
     };
   }
 
   function sourceLabel(record) {
-    return record.dataSource || record.raw?.source || (record.external ? "Session import" : "Curated");
+    return record.dataSource || record.raw?.source || record.raw?.raw?.source || (record.external ? "Session import" : "Curated");
   }
 
   function fact(label, value) {

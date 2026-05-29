@@ -396,9 +396,10 @@ async function fetchPubChemRecord(query) {
   const compound = properties?.PropertyTable?.Properties?.[0];
   if (!compound?.CID) return null;
 
-  const [descriptionResult, synonymResult] = await Promise.allSettled([
+  const [descriptionResult, synonymResult, safetyResult] = await Promise.allSettled([
     fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${compound.CID}/description/JSON`, true),
-    fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${compound.CID}/synonyms/JSON`, true)
+    fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${compound.CID}/synonyms/JSON`, true),
+    fetchPubChemSafety(compound.CID, compound)
   ]);
 
   const description = descriptionResult.status === "fulfilled"
@@ -407,6 +408,7 @@ async function fetchPubChemRecord(query) {
   const synonyms = synonymResult.status === "fulfilled"
     ? synonymResult.value?.InformationList?.Information?.[0]?.Synonym?.slice(0, 10) || []
     : [];
+  const safety = safetyResult.status === "fulfilled" ? safetyResult.value : {};
   const title = compound.Title || query;
   const cid = String(compound.CID);
   const href = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
@@ -429,7 +431,8 @@ async function fetchPubChemRecord(query) {
     description,
     synonyms,
     imageUrl,
-    href
+    href,
+    ...safety
   };
 
   return withSearchText({
@@ -447,8 +450,42 @@ async function fetchPubChemRecord(query) {
     href,
     sourceHref: href,
     imageUrl,
+    ...safety,
     raw
   });
+}
+
+async function fetchPubChemSafety(cid, compound = {}) {
+  const ghs = await fetchJSON(`https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${encodeURIComponent(cid)}/JSON?heading=${encodeURIComponent("GHS Classification")}`, true);
+  const infos = collectPubChemInfo(ghs);
+  const hazardStatements = infoStrings(infos.find((item) => item.Name === "GHS Hazard Statements")).slice(0, 6);
+  const signalWord = infoStrings(infos.find((item) => item.Name === "Signal"))[0] || "";
+  const precautionaryStatements = infoStrings(infos.find((item) => item.Name === "Precautionary Statement Codes")).slice(0, 2);
+  return {
+    hazardStatements,
+    hazardLevel: hazardLevelFrom(hazardStatements, signalWord),
+    signalWord,
+    precautionaryStatements,
+    disposalMethod: disposalFromHazards(hazardStatements, {
+      title: compound.Title,
+      formula: compound.MolecularFormula
+    }),
+    safetySource: "PubChem GHS summary"
+  };
+}
+
+function collectPubChemInfo(payload) {
+  const infos = [];
+  const walk = (section) => {
+    (section?.Information || []).forEach((item) => infos.push(item));
+    (section?.Section || []).forEach(walk);
+  };
+  walk(payload?.Record);
+  return infos;
+}
+
+function infoStrings(info) {
+  return info?.Value?.StringWithMarkup?.map((item) => String(item.String || "").trim()).filter(Boolean) || [];
 }
 
 async function fetchPubMedRecords(query, limit) {
@@ -596,15 +633,16 @@ function fallbackEnvelope(options = {}) {
   const type = clean(options.type).toLowerCase();
   const limit = clamp(Number(options.limit || 24), 1, 100);
   const offset = Math.max(0, Number(options.offset || 0));
-  const rows = fallbackRecords.filter((record) => {
+  const prepared = fallbackRecords.map((record) => withSearchText({ ...record, imageUrl: imageForRecord(record) }));
+  const rows = prepared.filter((record) => {
     if (type && record.type !== type) return false;
     if (!query) return true;
-    return buildSearchText(record).includes(query.toLowerCase());
+    return record.searchText.includes(query.toLowerCase());
   });
 
   return {
     source: "fallback",
-    records: rows.slice(offset, offset + limit).map((record) => withSearchText({ ...record, imageUrl: imageForRecord(record) })),
+    records: rows.slice(offset, offset + limit),
     meta: {
       count: rows.length,
       limit,
@@ -666,13 +704,19 @@ function normaliseRow(row) {
     href: row.href || `/pages/record.html?type=${encodeURIComponent(row.type)}&id=${encodeURIComponent(row.id)}`,
     sourceHref: row.source_href || "",
     imageUrl: row.image_url || raw.imageUrl || "",
-    checkStatus: raw.checkStatus || (raw.source ? "accepted" : "curated"),
+    checkStatus: raw.checkStatus || (raw.source || raw.raw?.source ? "accepted" : "curated"),
     checkedAt: raw.checkedAt || row.updated_at || "",
+    hazardStatements: raw.hazardStatements || [],
+    hazardLevel: raw.hazardLevel || "",
+    signalWord: raw.signalWord || "",
+    precautionaryStatements: raw.precautionaryStatements || [],
+    disposalMethod: raw.disposalMethod || "",
+    safetySource: raw.safetySource || "",
     raw,
     searchText: row.search_text || "",
     updatedAt: row.updated_at || ""
   };
-  return { ...record, imageUrl: imageForRecord(record) };
+  return withSearchText({ ...record, imageUrl: imageForRecord(record) });
 }
 
 function countTags(jsonRows) {
@@ -686,12 +730,23 @@ function countTags(jsonRows) {
 }
 
 function withSearchText(record) {
+  const safety = normaliseSafety(record);
+  const raw = {
+    ...(record.raw || {}),
+    ...(safety.hazardStatements.length ? { hazardStatements: safety.hazardStatements } : {}),
+    ...(safety.hazardLevel ? { hazardLevel: safety.hazardLevel } : {}),
+    ...(safety.signalWord ? { signalWord: safety.signalWord } : {}),
+    ...(safety.precautionaryStatements.length ? { precautionaryStatements: safety.precautionaryStatements } : {}),
+    ...(safety.disposalMethod ? { disposalMethod: safety.disposalMethod } : {}),
+    ...(safety.safetySource ? { safetySource: safety.safetySource } : {})
+  };
+  const merged = { ...record, ...safety, raw };
   return {
-    ...record,
-    imageUrl: imageForRecord(record),
-    checkStatus: record.checkStatus || record.raw?.checkStatus || (record.raw?.source ? "accepted" : "curated"),
-    checkedAt: record.checkedAt || record.raw?.checkedAt || "",
-    searchText: record.searchText || buildSearchText(record)
+    ...merged,
+    imageUrl: imageForRecord(merged),
+    checkStatus: record.checkStatus || raw.checkStatus || (raw.source || raw.raw?.source ? "accepted" : "curated"),
+    checkedAt: record.checkedAt || raw.checkedAt || "",
+    searchText: record.searchText || buildSearchText(merged)
   };
 }
 
@@ -706,8 +761,95 @@ function buildSearchText(record) {
     record.family,
     record.risk,
     record.formula,
+    record.hazardLevel,
+    record.signalWord,
+    ...(record.hazardStatements || []),
+    ...(record.precautionaryStatements || []),
+    record.disposalMethod,
     ...(record.tags || [])
   ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function normaliseSafety(record) {
+  const raw = record.raw || {};
+  const explicitHazards = uniqueStrings([
+    ...(record.hazardStatements || raw.hazardStatements || []),
+    ...(record.ghsHazards || raw.ghsHazards || []),
+    record.hazardStatement,
+    raw.hazardStatement
+  ]);
+  const safetyNotes = uniqueStrings([
+    record.safety,
+    raw.safety
+  ]);
+  const hazardStatements = explicitHazards.length ? explicitHazards : safetyNotes;
+  if (!hazardStatements.length && !isSafetyRelevant(record)) {
+    return {
+      hazardStatements: [],
+      hazardLevel: "",
+      signalWord: "",
+      precautionaryStatements: [],
+      disposalMethod: "",
+      safetySource: ""
+    };
+  }
+  const hazardLevel = record.hazardLevel || raw.hazardLevel || hazardLevelFrom(hazardStatements, record.signalWord || raw.signalWord || "");
+  return {
+    hazardStatements: hazardStatements.length ? hazardStatements : [fallbackHazardStatement(record, hazardLevel)],
+    hazardLevel,
+    signalWord: record.signalWord || raw.signalWord || signalFromLevel(hazardLevel),
+    precautionaryStatements: uniqueStrings([...(record.precautionaryStatements || raw.precautionaryStatements || [])]),
+    disposalMethod: record.disposalMethod || raw.disposalMethod || disposalFromHazards(hazardStatements, record),
+    safetySource: record.safetySource || raw.safetySource || (raw.source === "PubChem" || raw.raw?.source === "PubChem" || record.sourceHref?.includes("pubchem") ? "PubChem GHS summary" : "Local safety summary")
+  };
+}
+
+function isSafetyRelevant(record) {
+  const text = `${record.type || ""} ${record.typeLabel || ""} ${record.family || ""} ${record.domain || ""} ${record.risk || ""}`.toLowerCase();
+  return Boolean(record.formula || record.cas || record.risk || record.safety || record.raw?.safety)
+    || /compound|reagent|reactant|material|solvent|acid|base|oxidizer|halogen|salt|polymer|nanomaterial|catalyst/.test(text);
+}
+
+function fallbackHazardStatement(record, level) {
+  if (level === "Not classified") return "No local GHS hazard statement is currently classified for this record; verify the current SDS before use.";
+  if (record.risk === "corrosive") return "Corrosive material or reagent system; may cause burns or serious eye damage depending on concentration.";
+  if (record.risk === "oxidizer") return "Oxidizing material or reagent system; may intensify fire and react with incompatible reducing or organic materials.";
+  if (record.risk === "dry") return "Moisture-sensitive or reactive material; contact with water, air or protic media may create additional hazards.";
+  if (record.risk === "toxic") return "Toxic material or reagent system; avoid exposure and verify route-specific hazards from the SDS.";
+  if (record.risk === "energetic") return "Potential energetic or instability hazard; avoid heat, friction, impact and incompatible storage conditions.";
+  return "Hazard statement not fully classified in local data; verify the current SDS before handling.";
+}
+
+function hazardLevelFrom(statements = [], signalWord = "") {
+  const text = `${signalWord} ${statements.join(" ")}`.toLowerCase();
+  if (/fatal|cancer|mutagen|reproductive|damage to organs|explosive|pyrophoric|energetic/.test(text)) return "Severe";
+  if (/toxic|corrosive|skin burns|serious eye damage|highly flammable|extremely flammable|oxidizer|may intensify fire/.test(text)) return "High";
+  if (/harmful|irritation|drowsiness|dizziness|flammable/.test(text)) return "Moderate";
+  return statements.length ? "Low" : "Not classified";
+}
+
+function signalFromLevel(level) {
+  if (level === "Severe" || level === "High") return "Danger";
+  if (level === "Moderate" || level === "Low") return "Warning";
+  return "Not available";
+}
+
+function disposalFromHazards(statements = [], context = {}) {
+  const text = `${context.title || ""} ${context.formula || ""} ${context.family || ""} ${context.domain || ""} ${context.risk || ""} ${statements.join(" ")}`.toLowerCase();
+  if (/chlorinated|halogenated|chloroform|dichloromethane|methylene chloride|bromine|iodine|chlorine/.test(text)) return "Collect as halogenated or toxic hazardous waste in a compatible labelled container; do not pour to drain.";
+  if (/chrom|osmium|lead|mercury|cadmium|nickel|silver|copper|manganese|metal|catalyst/.test(text)) return "Collect as heavy-metal or catalyst waste for institutional hazardous-waste pickup.";
+  if (/azide|cyanide|diazonium|energetic|explosive|pyrophoric/.test(text)) return "Collect as reactive/toxic hazardous waste and keep segregated under institutional EHS guidance.";
+  if (/corrosive|acid|base|amine|pyridine|anhydride|skin burns|serious eye damage/.test(text)) return "Collect as corrosive hazardous waste or neutralize only under an approved institutional procedure.";
+  if (/flammable|solvent|ether|toluene|hexane|acetone|ethanol|methanol|acetonitrile|tetrahydrofuran|ethyl acetate|dimethylformamide/.test(text) && !/oxidizer|hypochlorite|permanganate|nitrate|may intensify fire/.test(text)) return "Collect in a compatible flammable organic-waste container; keep ignition sources excluded and do not pour to drain.";
+  if (/oxidizer|peroxide|hypochlorite|permanganate|nitrate|may intensify fire/.test(text)) return "Collect as oxidizing hazardous waste; keep separate from organics, reducers and incompatible containers.";
+  if (/flammable|solvent|ether|toluene|hexane|acetone|ethanol|methanol|acetonitrile|tetrahydrofuran|ethyl acetate|dimethylformamide/.test(text)) return "Collect in a compatible flammable organic-waste container; keep ignition sources excluded and do not pour to drain.";
+  if (/toxic|cancer|mutagen|reproductive|damage to organs|fatal/.test(text)) return "Collect as toxic hazardous waste; keep segregated and route through institutional EHS.";
+  if (/not classified/.test(text)) return "Use local non-hazardous or aqueous-waste rules only after checking the current SDS and institutional policy.";
+  return "Dispose through approved chemical-waste channels according to SDS, institutional EHS guidance and local regulations.";
+}
+
+function uniqueStrings(values) {
+  return [...new Set((values || []).flat().filter(Boolean).map((value) => String(value).trim()).filter(Boolean))];
 }
 
 function imageForRecord(record) {

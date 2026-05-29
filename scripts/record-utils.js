@@ -23,6 +23,7 @@
     const tags = unique(input.tags);
     const title = input.title || input.name || input.term || input.id;
     const body = input.body || input.summary || input.definition || input.subtitle || "";
+    const safety = safetyProfile(input);
     const searchText = compact([
       input.type,
       input.typeLabel,
@@ -35,6 +36,10 @@
       input.risk,
       input.formula,
       input.cas,
+      safety.hazardLevel,
+      safety.signalWord,
+      safety.hazardStatements.join(" "),
+      safety.disposalMethod,
       tags.join(" "),
       (input.sections || []).flatMap((section) => [section.title, ...(section.items || [])]).join(" ")
     ].join(" "));
@@ -43,10 +48,93 @@
       title,
       body,
       tags,
+      hazardStatements: safety.hazardStatements,
+      hazardLevel: safety.hazardLevel,
+      signalWord: safety.signalWord,
+      precautionaryStatements: safety.precautionaryStatements,
+      disposalMethod: safety.disposalMethod,
+      safetySource: safety.safetySource,
       imageUrl: input.imageUrl || recordImage(input.typeLabel || input.type, title, input.subtitle || input.family || input.domain || input.formula || ""),
       searchText,
       href: input.external ? input.href : recordUrl(input.type, input.id)
     };
+  }
+
+  function safetyProfile(input) {
+    const raw = input.raw || input;
+    const explicitHazards = unique([
+      ...(input.hazardStatements || raw.hazardStatements || []),
+      ...(input.ghsHazards || raw.ghsHazards || []),
+      input.hazardStatement,
+      raw.hazardStatement
+    ]).map((item) => String(item).trim()).filter(Boolean);
+    const safetyNotes = unique([
+      input.safety || raw.safety
+    ]).map((item) => String(item).trim()).filter(Boolean);
+    const hazardStatements = explicitHazards.length ? explicitHazards : safetyNotes;
+    if (!hazardStatements.length && !isSafetyRelevant(input)) {
+      return {
+        hazardStatements: [],
+        hazardLevel: "",
+        signalWord: "",
+        precautionaryStatements: [],
+        disposalMethod: "",
+        safetySource: ""
+      };
+    }
+    const level = input.hazardLevel || raw.hazardLevel || hazardLevelFrom(input.risk, hazardStatements);
+    return {
+      hazardStatements: hazardStatements.length ? hazardStatements : [fallbackHazardStatement(input, level)],
+      hazardLevel: level,
+      signalWord: input.signalWord || raw.signalWord || signalFromLevel(level),
+      precautionaryStatements: unique([...(input.precautionaryStatements || raw.precautionaryStatements || [])]),
+      disposalMethod: input.disposalMethod || raw.disposalMethod || disposalFor(input, hazardStatements, level),
+      safetySource: input.safetySource || raw.safetySource || (raw.source === "PubChem" || raw.raw?.source === "PubChem" || input.sourceHref?.includes("pubchem") ? "PubChem GHS summary" : "Local safety summary")
+    };
+  }
+
+  function isSafetyRelevant(input) {
+    const text = `${input.type || ""} ${input.typeLabel || ""} ${input.family || ""} ${input.category || ""} ${input.domain || ""}`.toLowerCase();
+    return Boolean(input.formula || input.cas || input.risk || input.safety || input.hazards)
+      || /compound|reagent|reactant|material|solvent|acid|base|oxidizer|halogen|salt|polymer|nanomaterial|catalyst/.test(text);
+  }
+
+  function fallbackHazardStatement(input, level) {
+    if (level === "Not classified") return "No local GHS hazard statement is currently classified for this record; verify the current SDS before use.";
+    if (input.risk === "corrosive") return "Corrosive material or reagent system; may cause burns or serious eye damage depending on concentration.";
+    if (input.risk === "oxidizer") return "Oxidizing material or reagent system; may intensify fire and react with incompatible reducing or organic materials.";
+    if (input.risk === "dry") return "Moisture-sensitive or reactive material; contact with water, air or protic media may create additional hazards.";
+    if (input.risk === "toxic") return "Toxic material or reagent system; avoid exposure and verify route-specific hazards from the SDS.";
+    if (input.risk === "energetic") return "Potential energetic or instability hazard; avoid heat, friction, impact and incompatible storage conditions.";
+    return "Hazard statement not fully classified in local data; verify the current SDS before handling.";
+  }
+
+  function hazardLevelFrom(risk, statements = []) {
+    const text = `${risk || ""} ${statements.join(" ")}`.toLowerCase();
+    if (/fatal|cancer|mutagen|reproductive|damage to organs|explosive|pyrophoric|energetic|toxic/.test(text)) return "Severe";
+    if (/corrosive|skin burns|serious eye damage|oxidizer|highly flammable|extremely flammable|dry/.test(text)) return "High";
+    if (/harmful|irritation|drowsiness|dizziness|flammable|standard/.test(text)) return "Moderate";
+    if (/not classified|no local/.test(text)) return "Not classified";
+    return statements.length ? "Low" : "Not classified";
+  }
+
+  function signalFromLevel(level) {
+    if (level === "Severe" || level === "High") return "Danger";
+    if (level === "Moderate" || level === "Low") return "Warning";
+    return "Not available";
+  }
+
+  function disposalFor(input, statements = [], level = "") {
+    const text = `${input.risk || ""} ${input.family || ""} ${input.category || ""} ${statements.join(" ")}`.toLowerCase();
+    if (/halogen|chloroform|dichloromethane|bromine|iodine/.test(text)) return "Collect as halogenated or toxic hazardous waste in a compatible labelled container; do not pour to drain.";
+    if (/chrom|osmium|lead|mercury|cadmium|nickel|metal|catalyst/.test(text)) return "Collect as heavy-metal or catalyst waste for institutional hazardous-waste pickup.";
+    if (/azide|cyanide|diazonium|energetic|explosive|pyrophoric/.test(text)) return "Collect as reactive/toxic hazardous waste and keep segregated under institutional EHS guidance.";
+    if (/corrosive|acid|base|skin burns|serious eye damage/.test(text)) return "Collect as corrosive hazardous waste or neutralize only under an approved institutional procedure.";
+    if (/solvent|flammable|ether|toluene|hexane|acetone|ethanol|methanol|acetonitrile|tetrahydrofuran|ethyl acetate|dimethylformamide/.test(text) && !/oxidizer|hypochlorite|permanganate|nitrate|may intensify fire/.test(text)) return "Collect in a compatible flammable organic-waste container; keep ignition sources excluded and do not pour to drain.";
+    if (/oxidizer|peroxide|hypochlorite|permanganate|nitrate/.test(text)) return "Collect as oxidizing hazardous waste; keep separate from organics, reducers and incompatible containers.";
+    if (/flammable|solvent|ether|toluene|hexane|acetone|ethanol|methanol/.test(text)) return "Collect in a compatible flammable organic-waste container; keep ignition sources excluded and do not pour to drain.";
+    if (level === "Not classified") return "Use local non-hazardous or aqueous-waste rules only after checking the current SDS and institutional policy.";
+    return "Dispose through approved chemical-waste channels according to SDS, institutional EHS guidance and local regulations.";
   }
 
   function buildRecords(options = {}) {

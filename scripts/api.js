@@ -183,7 +183,20 @@
     const rows = localRecords().filter((record) => {
       if (type && record.type !== type) return false;
       if (!query) return true;
-      return normalise([record.type, record.typeLabel, record.title, record.subtitle, record.body, record.domain, record.family, ...(record.tags || [])].join(" ")).includes(query);
+      return normalise([
+        record.type,
+        record.typeLabel,
+        record.title,
+        record.subtitle,
+        record.body,
+        record.domain,
+        record.family,
+        record.hazardLevel,
+        record.signalWord,
+        ...(record.hazardStatements || []),
+        record.disposalMethod,
+        ...(record.tags || [])
+      ].join(" ")).includes(query);
     });
     return {
       source: "browser-fallback",
@@ -202,27 +215,36 @@
   function localRecords() {
     const records = window.CHEMVAULT_RECORDS;
     if (records?.buildRecords) {
-      return records.buildRecords({ includeImported: true }).map((record) => ({
-        id: record.id,
-        type: record.type,
-        typeLabel: record.typeLabel || record.type,
-        title: record.title,
-        subtitle: record.subtitle || "",
-        body: record.body || "",
-        domain: record.domain || "",
-        family: record.family || "",
-        risk: record.risk || "",
-        maturity: Number(record.maturity || 0),
-        formula: record.formula || "",
-        tags: record.tags || [],
-        href: record.external ? record.href : records.recordUrl(record.type, record.id),
-        sourceHref: record.sourceHref || "",
-        imageUrl: record.imageUrl || record.raw?.imageUrl || placeholderImage(record.typeLabel || record.type, record.title, record.family || record.domain),
-        checkStatus: record.checkStatus || record.raw?.checkStatus || (record.raw?.source ? "accepted" : "curated"),
-        checkedAt: record.checkedAt || record.raw?.checkedAt || "",
-        raw: record.raw || {},
-        searchText: record.searchText || ""
-      }));
+      return records.buildRecords({ includeImported: true }).map((record) => {
+        const rawSource = record.raw?.source || record.raw?.raw?.source;
+        return ({
+          id: record.id,
+          type: record.type,
+          typeLabel: record.typeLabel || record.type,
+          title: record.title,
+          subtitle: record.subtitle || "",
+          body: record.body || "",
+          domain: record.domain || "",
+          family: record.family || "",
+          risk: record.risk || "",
+          maturity: Number(record.maturity || 0),
+          formula: record.formula || "",
+          tags: record.tags || [],
+          href: record.external ? record.href : records.recordUrl(record.type, record.id),
+          sourceHref: record.sourceHref || "",
+          imageUrl: record.imageUrl || record.raw?.imageUrl || placeholderImage(record.typeLabel || record.type, record.title, record.family || record.domain),
+          hazardStatements: record.hazardStatements || record.raw?.hazardStatements || [],
+          hazardLevel: record.hazardLevel || record.raw?.hazardLevel || "",
+          signalWord: record.signalWord || record.raw?.signalWord || "",
+          precautionaryStatements: record.precautionaryStatements || record.raw?.precautionaryStatements || [],
+          disposalMethod: record.disposalMethod || record.raw?.disposalMethod || "",
+          safetySource: record.safetySource || record.raw?.safetySource || "",
+          checkStatus: record.checkStatus || record.raw?.checkStatus || (rawSource ? "accepted" : "curated"),
+          checkedAt: record.checkedAt || record.raw?.checkedAt || "",
+          raw: record.raw || {},
+          searchText: record.searchText || ""
+        });
+      });
     }
     return fallbackRecords;
   }
