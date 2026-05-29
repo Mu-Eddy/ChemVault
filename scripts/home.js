@@ -110,6 +110,33 @@
     });
   }
 
+  async function renderBackendStatus() {
+    const label = $("#backendStatusLabel");
+    const mode = $("#backendStatusMode");
+    const list = $("#backendStatusList");
+    const setStatus = (items, code = "local fallback") => {
+      if (label) label.textContent = items[0] || "fallback local data";
+      if (mode) mode.textContent = code;
+      if (list) list.innerHTML = items.map((item) => `<span>${escapeHTML(item)}</span>`).join("");
+    };
+
+    setStatus(["fallback local data"], "API pending");
+    try {
+      const health = await window.CHEMVAULT_API?.health?.();
+      if (!health) {
+        setStatus(["fallback local data"], "API unavailable");
+        return;
+      }
+      const items = [];
+      if (health.backend === "d1" || health.features?.d1) items.push("D1 connected");
+      else items.push("fallback local data");
+      if (health.features?.academicEnrichment) items.push("academic enrichment available");
+      setStatus(items, health.backend === "d1" ? "D1" : "fallback");
+    } catch {
+      setStatus(["fallback local data"], "API unavailable");
+    }
+  }
+
   function externalUrl(source, query) {
     const encoded = encode(query);
     if (!encoded) return source.baseUrl;
@@ -228,6 +255,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     initShell();
     renderMetrics();
+    renderBackendStatus();
     initSearch();
     wireTopbarSearch();
   });

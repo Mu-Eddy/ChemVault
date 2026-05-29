@@ -4,6 +4,7 @@
     wireShellTheme();
     wireShellSearch();
     markActivePage();
+    ensureDeveloperFooter();
   });
 
   function wireShellNav() {
@@ -98,6 +99,24 @@
       const file = href.split("/").pop() || "index.html";
       link.toggleAttribute("aria-current", file === current);
     });
+  }
+
+  function ensureDeveloperFooter() {
+    if (document.querySelector(".site-footer")) return;
+    const version = document.querySelector(".site-version");
+    const footer = document.createElement("footer");
+    footer.className = "site-footer";
+    footer.innerHTML = `
+      <div class="container footer-grid developer-footer-grid">
+        <div>
+          <strong>© 2026 ChemVault. Developed by Edward Mu.</strong>
+          <p>ChemVault is an independent academic chemistry portal built for local-first chemical records, research workflows, and verified academic source enrichment. Data is loaded from curated local records, Cloudflare D1, and trusted scientific sources where available.</p>
+          <p>Built with HTML, CSS, JavaScript, Cloudflare Pages, Cloudflare Functions, and Cloudflare D1.</p>
+        </div>
+      </div>
+    `;
+    if (version) version.before(footer);
+    else document.body.appendChild(footer);
   }
 
   function normalise(value) {

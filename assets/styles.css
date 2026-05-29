@@ -1481,6 +1481,25 @@ td strong {
   align-items: center;
 }
 
+.developer-footer-grid {
+  align-items: flex-start;
+}
+
+.developer-footer-grid > div:first-child {
+  max-width: 880px;
+}
+
+.developer-footer-grid strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.developer-footer-grid p {
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
 .footer-links {
   display: flex;
   flex-wrap: wrap;

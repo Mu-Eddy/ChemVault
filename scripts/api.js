@@ -70,6 +70,12 @@
         ok: true,
         service: "chemvault-api",
         backend: "browser-fallback",
+        status: "fallback local data",
+        features: {
+          d1: false,
+          fallbackLocalData: true,
+          academicEnrichment: false
+        },
         warning: error.message
       };
     }
@@ -212,6 +218,8 @@
         href: record.external ? record.href : records.recordUrl(record.type, record.id),
         sourceHref: record.sourceHref || "",
         imageUrl: record.imageUrl || record.raw?.imageUrl || placeholderImage(record.typeLabel || record.type, record.title, record.family || record.domain),
+        checkStatus: record.checkStatus || record.raw?.checkStatus || (record.raw?.source ? "accepted" : "curated"),
+        checkedAt: record.checkedAt || record.raw?.checkedAt || "",
         raw: record.raw || {},
         searchText: record.searchText || ""
       }));

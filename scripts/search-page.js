@@ -12,6 +12,7 @@
   let latestLiveCandidates = [];
   let backendRecords = [];
   let latestSearchRun = 0;
+  let currentResultMap = new Map();
   const $ = (selector) => document.querySelector(selector);
   const esc = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -41,13 +42,14 @@
     });
   }
 
-  function toIndexRecord(record, fallbackSource = "imported") {
+  function toIndexRecord(record, fallbackSource = "imported", explicitDataSource = "") {
     const type = record.type || "imported";
     const typeLabel = record.typeLabel || record.type_label || type;
     const body = record.body || record.subtitle || "";
     const href = record.href || `record.html?type=${encode(type)}&id=${encode(record.id)}`;
     const external = /^https?:\/\//i.test(href);
     const raw = record.raw || {};
+    const source = raw.source || explicitDataSource || dataSourceFromRecord(record, fallbackSource);
     return {
       id: record.id,
       recordType: type,
@@ -64,12 +66,26 @@
       maturity: Number(record.maturity || 0),
       formula: record.formula || raw.formula || "",
       sourceHref: record.sourceHref || record.source_href || "",
-      sourceKind: raw.source ? "imported" : fallbackSource,
+      sourceKind: source === "Curated" || source === "D1" || source === "Fallback" ? "curated" : "imported",
+      dataSource: source,
       imageUrl: record.imageUrl || record.image_url || record.raw?.imageUrl || "",
+      checkStatus: record.checkStatus || raw.checkStatus || (raw.source ? "accepted" : source.toLowerCase()),
+      checkedAt: record.checkedAt || raw.checkedAt || record.updatedAt || record.updated_at || "",
       raw,
       updatedAt: record.updatedAt || record.updated_at || "",
       searchText: record.searchText || compact(`${typeLabel} ${record.title} ${record.subtitle || ""} ${body} ${record.formula || ""} ${(record.tags || []).join(" ")}`)
     };
+  }
+
+  function dataSourceFromRecord(record, fallbackSource) {
+    const rawSource = record.raw?.source;
+    if (rawSource === "PubChem" || rawSource === "PubMed") return rawSource;
+    if (fallbackSource === "d1") return "D1";
+    if (fallbackSource === "fallback" || fallbackSource === "browser-fallback") return "Fallback";
+    if (fallbackSource === "session") return "Session import";
+    if (fallbackSource === "curated") return "Curated";
+    if (record.external) return "Session import";
+    return rawSource || "Curated";
   }
 
   function thumbnailFor(item) {
@@ -134,7 +150,10 @@
         subtitle: record.subtitle || "",
         sourceHref: record.sourceHref || "",
         raw: record.raw || {},
+        checkStatus: record.checkStatus || record.raw?.checkStatus || (record.raw?.source ? "accepted" : "curated"),
+        checkedAt: record.checkedAt || record.raw?.checkedAt || "",
         sourceKind: record.external ? "imported" : "curated",
+        dataSource: record.external ? "Session import" : "Curated",
         imageUrl: record.imageUrl || record.raw?.imageUrl || "",
         searchText: record.searchText || compact(`${record.title} ${record.body} ${(record.tags || []).join(" ")}`)
       }));
@@ -344,6 +363,7 @@
     }
 
     if (!rows.length) {
+      currentResultMap = new Map();
       panel.innerHTML = `
         <div class="empty-state">
           <span class="eyebrow">Academic search boundary</span>
@@ -354,17 +374,19 @@
       return 0;
     }
 
+    currentResultMap = new Map(rows.map((item) => [recordKey(item), item]));
     panel.innerHTML = rows.map((item) => academicResultItem(item)).join("");
     wireImageFallbacks(panel);
     return rows.length;
   }
 
   function academicResultItem(item) {
+    const key = recordKey(item);
     const fallback = placeholderImage(item.type, item.title, item.family || item.domain || item.formula || "");
     const body = item.body || item.subtitle || "Checked academic metadata.";
     const tags = resultTags(item);
     return `
-      <a class="local-result-card academic-result-item" href="${esc(item.href)}"${item.external ? ' target="_blank" rel="noreferrer"' : ""}>
+      <article class="local-result-card academic-result-item" role="button" tabindex="0" data-record-key="${esc(key)}">
         <span class="result-thumb academic-result-media" aria-hidden="true">
           <img src="${esc(thumbnailFor(item))}" data-fallback-src="${esc(fallback)}" alt="" loading="lazy" referrerpolicy="no-referrer" />
         </span>
@@ -378,22 +400,24 @@
           ${item.formula ? `<span class="result-formula"><span>Formula</span><code>${esc(item.formula)}</code></span>` : ""}
           <span class="result-meta">${resultMeta(item).map(esc).join(" · ")}</span>
           ${tags.length ? `<span class="result-tag-row">${tags.map((tag) => `<span>${esc(tag)}</span>`).join("")}</span>` : ""}
+          <span class="result-detail-link">View details</span>
         </span>
-      </a>
+      </article>
     `;
   }
 
   function resultSourceLabel(item) {
-    if (item.raw?.source) return `NIH / ${item.raw.source}`;
-    if (item.sourceKind === "imported") return item.external ? "Academic import" : "Saved import";
-    if (item.external) return "External source";
-    return "ChemVault local";
+    return item.dataSource || dataSourceFromRecord(item, item.sourceKind);
   }
 
   function sourcePillClass(item) {
-    if (item.raw?.source || item.sourceKind === "imported") return "source-imported";
-    if (item.external) return "source-external";
-    return "source-local";
+    const source = resultSourceLabel(item).toLowerCase().replace(/\s+/g, "-");
+    if (source.includes("pubchem")) return "source-pubchem";
+    if (source.includes("pubmed")) return "source-pubmed";
+    if (source.includes("session")) return "source-session";
+    if (source.includes("d1")) return "source-d1";
+    if (source.includes("fallback")) return "source-fallback";
+    return "source-curated";
   }
 
   function resultMeta(item) {
@@ -402,6 +426,7 @@
       item.maturity ? `${item.maturity}% maturity` : "",
       item.raw?.cid ? `CID ${item.raw.cid}` : "",
       item.raw?.pmid ? `PMID ${item.raw.pmid}` : "",
+      item.checkStatus ? `checkStatus ${item.checkStatus}` : "",
       item.id ? `Record ${item.id}` : ""
     ].filter(Boolean);
   }
@@ -413,6 +438,82 @@
     ]).slice(0, 6);
   }
 
+  function renderRecordDetail(record) {
+    const panel = $("#recordDetailPanel");
+    if (!panel || !record) return;
+    const image = thumbnailFor(record);
+    const sourceHref = record.sourceHref || record.raw?.href || record.href || "";
+    const checkStatus = record.checkStatus || record.raw?.checkStatus || (record.dataSource === "Curated" ? "curated" : "not checked");
+    const checkedAt = record.checkedAt || record.raw?.checkedAt || record.updatedAt || "";
+    const pmid = record.raw?.pmid || (record.id || "").replace(/^pubmed-/, "");
+    const cid = record.raw?.cid || (record.id || "").replace(/^pubchem-/, "");
+    panel.hidden = false;
+    panel.innerHTML = `
+      <div class="record-detail-head">
+        <span class="eyebrow">Record details</span>
+        <button class="text-button" type="button" data-close-record-detail>Close</button>
+      </div>
+      <img class="record-detail-image" src="${esc(image)}" data-fallback-src="${esc(placeholderImage(record.type, record.title, record.family || record.domain || record.formula))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+      <h3>${esc(record.title)}</h3>
+      ${record.subtitle ? `<p>${esc(record.subtitle)}</p>` : ""}
+      <div class="record-detail-source-row">
+        <span class="source-pill ${esc(sourcePillClass(record))}">${esc(resultSourceLabel(record))}</span>
+        ${record.raw?.source === "PubMed" && pmid ? `<a href="${esc(sourceHref)}" target="_blank" rel="noreferrer">PMID ${esc(pmid)}</a>` : ""}
+        ${record.raw?.source === "PubChem" && cid ? `<a href="${esc(sourceHref)}" target="_blank" rel="noreferrer">CID ${esc(cid)}</a>` : ""}
+      </div>
+      <div class="record-detail-grid">
+        ${detailField("title", record.title)}
+        ${detailField("subtitle", record.subtitle)}
+        ${detailField("type", record.type)}
+        ${detailField("formula", record.formula)}
+        ${detailField("imageUrl", record.imageUrl || image)}
+        ${detailField("sourceHref", sourceHref, true)}
+        ${detailField("checkStatus", checkStatus)}
+        ${detailField("checkedAt", checkedAt)}
+      </div>
+      ${record.tags?.length ? `<div class="result-tag-row detail-tags">${record.tags.slice(0, 14).map((tag) => `<span>${esc(tag)}</span>`).join("")}</div>` : ""}
+      <section class="record-detail-body">
+        <strong>body</strong>
+        <p>${esc(record.body || "No body text available.")}</p>
+      </section>
+    `;
+    wireImageFallbacks(panel);
+  }
+
+  function detailField(label, value, link = false) {
+    const text = String(value || "").trim();
+    const display = text || "Not available";
+    const content = link && /^https?:\/\//i.test(text)
+      ? `<a href="${esc(text)}" target="_blank" rel="noreferrer">${esc(text)}</a>`
+      : `<span>${esc(display)}</span>`;
+    return `<div><strong>${esc(label)}</strong>${content}</div>`;
+  }
+
+  function hideRecordDetail() {
+    const panel = $("#recordDetailPanel");
+    if (!panel) return;
+    panel.hidden = true;
+    panel.innerHTML = "";
+  }
+
+  function recordKey(item) {
+    return `${item.recordType || item.type || "record"}:${item.id || compact(item.title)}`;
+  }
+
+  function setSearchStage(stage, detail = "") {
+    const status = $("#liveEnrichmentStatus");
+    if (!status) return;
+    status.dataset.stage = stage;
+    status.innerHTML = `
+      <span class="stage-label">${esc(stage)}</span>
+      ${detail ? `<span>${esc(detail)}</span>` : ""}
+    `;
+  }
+
+  function nextFrame() {
+    return new Promise((resolve) => window.requestAnimationFrame(resolve));
+  }
+
   async function runSearch() {
     const input = $("#academicSearch");
     const scope = $("#searchScope");
@@ -422,6 +523,8 @@
     if (liveController) liveController.abort();
     liveController = new AbortController();
     backendRecords = [];
+    hideRecordDetail();
+    setSearchStage("Searching local records", query ? `Query: ${query}` : "Enter a query to search ChemVault records.");
     let localCount = renderLocal(query, scope ? scope.value : "all", filters);
     renderExternal(query);
     const url = new URL(window.location.href);
@@ -445,7 +548,7 @@
 
     if (query.length >= 3 && window.CHEMVAULT_API?.searchRecords) {
       const status = $("#liveEnrichmentStatus");
-      if (status) status.textContent = "Checking ChemVault database before using academic sources...";
+      if (status) setSearchStage("Searching local records", "Checking ChemVault API and D1 before academic sources.");
       try {
         const payload = await window.CHEMVAULT_API.searchRecords({
           q: query,
@@ -453,8 +556,12 @@
           limit: 24
         }, { signal: liveController.signal });
         if (searchRun !== latestSearchRun) return;
-        backendRecords = (payload.records || []).map((record) => toIndexRecord(record, payload.source === "d1" ? "curated" : "imported"));
+        const dataSource = payload.source === "d1" ? "D1" : payload.source === "fallback" || payload.source === "browser-fallback" ? "Fallback" : "";
+        backendRecords = (payload.records || []).map((record) => toIndexRecord(record, payload.source === "d1" ? "d1" : payload.source, dataSource));
         localCount = renderLocal(query, scope ? scope.value : "all", filters);
+        if (localCount > 0) {
+          setSearchStage(payload.source === "d1" ? "Already exists in ChemVault" : "Local match found", `${localCount} record${localCount === 1 ? "" : "s"} ready for review.`);
+        }
       } catch (error) {
         if (error.name === "AbortError") return;
       }
@@ -472,14 +579,16 @@
     latestLiveCandidates = [];
     toggleImportAll(false);
     if (!query || query.length < 3) {
-      status.textContent = "Enter at least three characters to request NIH and PubChem enrichment.";
+      setSearchStage("Searching local records", "Enter at least three characters to request NIH and PubChem enrichment.");
       panel.innerHTML = "";
       renderImportedRecords();
       return;
     }
 
     if (localCount > 0) {
-      status.textContent = `${localCount} ChemVault result${localCount === 1 ? "" : "s"} shown inline with structure/source visuals. Academic auto-import runs only when there is no local match.`;
+      if (status.dataset.stage !== "Already exists in ChemVault") {
+        setSearchStage("Local match found", `${localCount} ChemVault result${localCount === 1 ? "" : "s"} shown inline with structure/source visuals.`);
+      }
       panel.innerHTML = "";
       renderImportedRecords();
       return;
@@ -491,14 +600,17 @@
       return;
     }
 
-    status.textContent = "No local record found. Pulling checked PubChem/PubMed metadata and adding accepted results to D1 when available...";
+    setSearchStage("No local match", "ChemVault will now check trusted academic sources.");
     panel.innerHTML = fallbackCards(query, "Requesting PubChem compound data and PubMed article metadata...");
+    await nextFrame();
+    if (signal.aborted) return;
+    setSearchStage("Checking academic sources", "No local match. Pulling checked PubChem/PubMed metadata and saving accepted results to D1 when available.");
 
     try {
       if (window.CHEMVAULT_API?.enrichRecords) {
         const payload = await window.CHEMVAULT_API.enrichRecords({ q: query, limit: 8 }, { signal });
         if (payload.records?.length) {
-          backendRecords = mergeIndexRows(backendRecords, payload.records.map((record) => toIndexRecord(record, payload.source === "academic-auto-d1" ? "curated" : "imported")));
+          backendRecords = mergeIndexRows(backendRecords, payload.records.map((record) => toIndexRecord(record, "imported")));
           localCount = renderLocal(query, $("#searchScope")?.value || "all");
         }
         if (payload.records?.length || payload.meta?.status !== "browser-fallback") {
@@ -522,7 +634,7 @@
       renderLiveResults(query, localCount, result);
     } catch (error) {
       if (error.name === "AbortError") return;
-      status.textContent = "External enrichment is temporarily unavailable.";
+      setSearchStage("Checking academic sources", "External enrichment is temporarily unavailable.");
       panel.innerHTML = fallbackCards(query, "Live import is blocked or temporarily unavailable. Use these direct NIH/PubChem links.");
     }
   }
@@ -628,9 +740,15 @@
     if (Array.isArray(result.records)) {
       latestLiveCandidates = result.records.map((record) => toSessionRecord(record, query));
       const stored = Number(result.meta?.stored || 0);
-      status.textContent = result.records.length
-        ? `${result.records.length} checked academic record${result.records.length === 1 ? "" : "s"} added to the search results list for "${query}". ${stored ? `${stored} stored in D1.` : "D1 storage was not available or no new record was stored."}`
-        : `No checked PubChem or PubMed metadata returned for "${query}". Use the outbound database links below.`;
+      if (result.meta?.status === "local-first" || result.meta?.status === "fallback-local-first") {
+        setSearchStage("Already exists in ChemVault", `${result.records.length} existing record${result.records.length === 1 ? "" : "s"} found.`);
+      } else if (stored) {
+        setSearchStage("Saved to ChemVault database", `${stored} PubChem/PubMed record${stored === 1 ? "" : "s"} saved to D1.`);
+      } else if (result.records.length) {
+        setSearchStage("Imported from PubChem/PubMed", `${result.records.length} checked academic record${result.records.length === 1 ? "" : "s"} added to the search results list.`);
+      } else {
+        setSearchStage("Checking academic sources", `No checked PubChem or PubMed metadata returned for "${query}".`);
+      }
       panel.innerHTML = result.records.length ? academicSyncSummary(result.records.length, stored) : fallbackCards(query, "No metadata was returned. Use direct NIH/PubChem search links.");
       toggleImportAll(Boolean(latestLiveCandidates.length));
       wireImportButtons();
@@ -703,9 +821,11 @@
 
     const count = cards.length;
     if (count) renderLocal(query, $("#searchScope")?.value || "all");
-    status.textContent = count
-      ? `${count} external record${count === 1 ? "" : "s"} added to the search results list for "${query}". ${localCount ? "Use them to extend the local context." : "These records fill the local database gap for this query."}`
-      : `No PubChem compound or PubMed article metadata returned for "${query}". Use the outbound database links below.`;
+    if (count) {
+      setSearchStage("Imported from PubChem/PubMed", `${count} external record${count === 1 ? "" : "s"} added to the search results list.`);
+    } else {
+      setSearchStage("Checking academic sources", `No PubChem compound or PubMed article metadata returned for "${query}".`);
+    }
     panel.innerHTML = cards.length ? academicSyncSummary(count, 0) : fallbackCards(query, "No metadata was returned. Use direct NIH/PubChem search links.");
     toggleImportAll(Boolean(latestLiveCandidates.length));
     wireImportButtons();
@@ -735,7 +855,16 @@
       tags: record.tags,
       href: record.href,
       imageUrl: record.imageUrl,
-      raw: { source }
+      sourceHref: record.href,
+      formula: record.formula || "",
+      checkStatus: record.checkStatus || "accepted",
+      checkedAt: record.checkedAt || record.importedAt || "",
+      raw: {
+        ...(record.raw || {}),
+        source,
+        checkStatus: record.checkStatus || record.raw?.checkStatus || "accepted",
+        checkedAt: record.checkedAt || record.raw?.checkedAt || record.importedAt || ""
+      }
     }, "imported");
   }
 
@@ -803,7 +932,20 @@
       ].filter(Boolean).join(" | "),
       tags: [query, "PubChem", compound.formula, compound.inchikey].filter(Boolean),
       href: compound.href,
+      sourceHref: compound.href,
+      formula: compound.formula || "",
       imageUrl: compound.imageUrl,
+      raw: {
+        source: "PubChem",
+        cid: compound.cid,
+        href: compound.href,
+        formula: compound.formula,
+        imageUrl: compound.imageUrl,
+        checkStatus: "accepted",
+        checkedAt: new Date().toISOString()
+      },
+      checkStatus: "accepted",
+      checkedAt: new Date().toISOString(),
       external: true,
       importedAt: new Date().toISOString()
     };
@@ -823,7 +965,19 @@
       ].filter(Boolean).join(" | "),
       tags: [query, "PubMed", article.pmid, article.doi].filter(Boolean),
       href: article.href,
+      sourceHref: article.href,
       imageUrl: article.imageUrl,
+      raw: {
+        source: "PubMed",
+        pmid: article.pmid,
+        href: article.href,
+        journal: article.journal,
+        doi: article.doi,
+        checkStatus: "accepted",
+        checkedAt: new Date().toISOString()
+      },
+      checkStatus: "accepted",
+      checkedAt: new Date().toISOString(),
       external: true,
       importedAt: new Date().toISOString()
     };
@@ -835,9 +989,14 @@
       type: record.typeLabel || record.type || "Imported record",
       title: record.title,
       body: record.body || record.subtitle || "",
+      formula: record.formula || record.raw?.formula || "",
       tags: [query, ...(record.tags || [])].filter(Boolean),
       href: record.href,
+      sourceHref: record.sourceHref || record.href || "",
       imageUrl: record.imageUrl || record.raw?.imageUrl || "",
+      raw: record.raw || {},
+      checkStatus: record.checkStatus || record.raw?.checkStatus || "accepted",
+      checkedAt: record.checkedAt || record.raw?.checkedAt || new Date().toISOString(),
       external: /^https?:\/\//i.test(record.href || ""),
       importedAt: new Date().toISOString()
     };
@@ -954,17 +1113,39 @@
       $(selector)?.addEventListener("change", runSearch);
     });
     document.addEventListener("click", (event) => {
-      const importAll = event.target.closest("[data-import-all]");
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+      const detailTrigger = target.closest("[data-record-key]");
+      if (detailTrigger) {
+        const record = currentResultMap.get(detailTrigger.dataset.recordKey);
+        if (record) renderRecordDetail(record);
+        return;
+      }
+      const closeDetail = target.closest("[data-close-record-detail]");
+      if (closeDetail) {
+        hideRecordDetail();
+        return;
+      }
+      const importAll = target.closest("[data-import-all]");
       if (importAll) {
         saveImportedRecords(latestLiveCandidates);
         importAll.textContent = "Saved";
         return;
       }
-      const clearButton = event.target.closest("[data-clear-imports]");
+      const clearButton = target.closest("[data-clear-imports]");
       if (!clearButton) return;
       localStorage.removeItem(importedStoreKey);
       renderImportedRecords();
       runSearch();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const target = event.target instanceof Element ? event.target : null;
+      const detailTrigger = target?.closest("[data-record-key]");
+      if (!detailTrigger) return;
+      event.preventDefault();
+      const record = currentResultMap.get(detailTrigger.dataset.recordKey);
+      if (record) renderRecordDetail(record);
     });
 
     if (input) input.addEventListener("input", () => {

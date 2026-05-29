@@ -139,7 +139,13 @@ export async function onRequest(context) {
         ok: true,
         service: "chemvault-api",
         version: API_VERSION,
-        backend: hasDb ? "d1" : "fallback"
+        backend: hasDb ? "d1" : "fallback",
+        status: hasDb ? "D1 connected" : "fallback local data",
+        features: {
+          d1: hasDb,
+          fallbackLocalData: true,
+          academicEnrichment: true
+        }
       });
     }
 
@@ -660,6 +666,8 @@ function normaliseRow(row) {
     href: row.href || `/pages/record.html?type=${encodeURIComponent(row.type)}&id=${encodeURIComponent(row.id)}`,
     sourceHref: row.source_href || "",
     imageUrl: row.image_url || raw.imageUrl || "",
+    checkStatus: raw.checkStatus || (raw.source ? "accepted" : "curated"),
+    checkedAt: raw.checkedAt || row.updated_at || "",
     raw,
     searchText: row.search_text || "",
     updatedAt: row.updated_at || ""
@@ -681,6 +689,8 @@ function withSearchText(record) {
   return {
     ...record,
     imageUrl: imageForRecord(record),
+    checkStatus: record.checkStatus || record.raw?.checkStatus || (record.raw?.source ? "accepted" : "curated"),
+    checkedAt: record.checkedAt || record.raw?.checkedAt || "",
     searchText: record.searchText || buildSearchText(record)
   };
 }

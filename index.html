@@ -11,22 +11,22 @@
   <meta property="og:type" content="website" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="assets/styles.css?v=20260538" />
-  <link rel="stylesheet" href="assets/portal.css?v=20260538" />
-  <script src="data/chem-data.js?v=20260538" defer></script>
-  <script src="data/reagent-extension.js?v=20260538" defer></script>
-  <script src="data/research-data.js?v=20260538" defer></script>
-  <script src="data/dossier-data.js?v=20260538" defer></script>
-  <script src="data/method-data.js?v=20260538" defer></script>
-  <script src="data/spectroscopy-data.js?v=20260538" defer></script>
-  <script src="data/materials-data.js?v=20260538" defer></script>
-  <script src="data/database-expansion.js?v=20260538" defer></script>
-  <script src="data/reagent-megalibrary.js?v=20260538" defer></script>
-  <script src="data/knowledge-expansion.js?v=20260538" defer></script>
-  <script src="data/external-sources.js?v=20260538" defer></script>
-  <script src="scripts/record-utils.js?v=20260538" defer></script>
-  <script src="scripts/api.js?v=20260538" defer></script>
-  <script src="scripts/home.js?v=20260538" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20260539" />
+  <link rel="stylesheet" href="assets/portal.css?v=20260539" />
+  <script src="data/chem-data.js?v=20260539" defer></script>
+  <script src="data/reagent-extension.js?v=20260539" defer></script>
+  <script src="data/research-data.js?v=20260539" defer></script>
+  <script src="data/dossier-data.js?v=20260539" defer></script>
+  <script src="data/method-data.js?v=20260539" defer></script>
+  <script src="data/spectroscopy-data.js?v=20260539" defer></script>
+  <script src="data/materials-data.js?v=20260539" defer></script>
+  <script src="data/database-expansion.js?v=20260539" defer></script>
+  <script src="data/reagent-megalibrary.js?v=20260539" defer></script>
+  <script src="data/knowledge-expansion.js?v=20260539" defer></script>
+  <script src="data/external-sources.js?v=20260539" defer></script>
+  <script src="scripts/record-utils.js?v=20260539" defer></script>
+  <script src="scripts/api.js?v=20260539" defer></script>
+  <script src="scripts/home.js?v=20260539" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -88,8 +88,11 @@
         <aside class="home-status-panel">
           <div class="panel-toolbar">
             <span class="status-dot"></span>
-            <span>public static build</span>
-            <code>Cloudflare-ready</code>
+            <span id="backendStatusLabel">Checking backend</span>
+            <code id="backendStatusMode">Cloudflare Pages</code>
+          </div>
+          <div class="backend-status-list" id="backendStatusList" aria-live="polite">
+            <span>fallback local data</span>
           </div>
           <div class="home-metric-grid" aria-label="ChemVault metrics">
             <div><strong id="metricSystems">0</strong><span>reaction systems</span></div>
@@ -143,13 +146,11 @@
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-grid">
-      <div class="brand footer-brand">
-        <span class="brand-mark">CV</span>
-        <span>
-          <strong>ChemVault</strong>
-          <small>public research portal</small>
-        </span>
+    <div class="container footer-grid developer-footer-grid">
+      <div>
+        <strong>© 2026 ChemVault. Developed by Edward Mu.</strong>
+        <p>ChemVault is an independent academic chemistry portal built for local-first chemical records, research workflows, and verified academic source enrichment. Data is loaded from curated local records, Cloudflare D1, and trusted scientific sources where available.</p>
+        <p>Built with HTML, CSS, JavaScript, Cloudflare Pages, Cloudflare Functions, and Cloudflare D1.</p>
       </div>
       <div class="footer-links">
         <a href="pages/app.html">App</a>
