@@ -5,7 +5,7 @@
 .framework-hero {
   background:
     linear-gradient(135deg, rgba(82, 199, 184, 0.085), transparent 34%),
-    linear-gradient(90deg, rgba(232, 188, 85, 0.065), transparent 56%),
+    linear-gradient(90deg, rgba(0, 113, 227, 0.065), transparent 56%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
 }
 
@@ -159,7 +159,7 @@
 .framework-nav-panel button.active {
   border-color: transparent;
   background: var(--amber);
-  color: #171614;
+  color: #ffffff;
 }
 
 .react-view-grid {
@@ -377,7 +377,7 @@
 }
 
 .react-segmented button.active {
-  color: #171614;
+  color: #ffffff;
   background: var(--amber);
   border-color: transparent;
 }
@@ -456,4 +456,32 @@
   .react-record-header {
     display: grid;
   }
+}
+
+/* Keep the React workbench aligned with the light Apple-style shell. */
+.framework-body,
+.framework-shell,
+.framework-stage,
+.react-network {
+  background: #f5f5f7;
+}
+
+.framework-nav-panel,
+.framework-content-panel,
+.framework-inspector-panel,
+.react-record-card,
+.react-workspace-card,
+.react-network-core,
+.react-network button {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  color: #1d1d1f;
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.07);
+}
+
+.framework-tab.active,
+.react-action-primary,
+.react-workspace-tab.active {
+  background: #0071e3;
+  color: #ffffff;
 }

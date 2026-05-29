@@ -5,26 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChemVault | Academic Search</title>
   <meta name="description" content="Search ChemVault local records and continue queries in NIH, NCBI, PubChem, NIST, IUPAC and DOI-level scholarly databases." />
-  <meta name="theme-color" content="#080a0a" />
+  <meta name="theme-color" content="#f5f5f7" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="../assets/styles.css?v=20260537" />
-  <link rel="stylesheet" href="../assets/portal.css?v=20260537" />
-  <script src="../data/chem-data.js?v=20260537" defer></script>
-  <script src="../data/reagent-extension.js?v=20260537" defer></script>
-  <script src="../data/research-data.js?v=20260537" defer></script>
-  <script src="../data/dossier-data.js?v=20260537" defer></script>
-  <script src="../data/method-data.js?v=20260537" defer></script>
-  <script src="../data/spectroscopy-data.js?v=20260537" defer></script>
-  <script src="../data/materials-data.js?v=20260537" defer></script>
-  <script src="../data/database-expansion.js?v=20260537" defer></script>
-  <script src="../data/reagent-megalibrary.js?v=20260537" defer></script>
-  <script src="../data/knowledge-expansion.js?v=20260537" defer></script>
-  <script src="../data/external-sources.js?v=20260537" defer></script>
-  <script src="../scripts/record-utils.js?v=20260537" defer></script>
-  <script src="../scripts/api.js?v=20260537" defer></script>
-  <script src="../scripts/site-shell.js?v=20260537" defer></script>
-  <script src="../scripts/search-page.js?v=20260537" defer></script>
+  <link rel="stylesheet" href="../assets/styles.css?v=20260538" />
+  <link rel="stylesheet" href="../assets/portal.css?v=20260538" />
+  <script src="../data/chem-data.js?v=20260538" defer></script>
+  <script src="../data/reagent-extension.js?v=20260538" defer></script>
+  <script src="../data/research-data.js?v=20260538" defer></script>
+  <script src="../data/dossier-data.js?v=20260538" defer></script>
+  <script src="../data/method-data.js?v=20260538" defer></script>
+  <script src="../data/spectroscopy-data.js?v=20260538" defer></script>
+  <script src="../data/materials-data.js?v=20260538" defer></script>
+  <script src="../data/database-expansion.js?v=20260538" defer></script>
+  <script src="../data/reagent-megalibrary.js?v=20260538" defer></script>
+  <script src="../data/knowledge-expansion.js?v=20260538" defer></script>
+  <script src="../data/external-sources.js?v=20260538" defer></script>
+  <script src="../scripts/record-utils.js?v=20260538" defer></script>
+  <script src="../scripts/api.js?v=20260538" defer></script>
+  <script src="../scripts/site-shell.js?v=20260538" defer></script>
+  <script src="../scripts/search-page.js?v=20260538" defer></script>
 </head>
 <body class="page-shell">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -121,7 +121,7 @@
                 <span>Exact phrase</span>
               </label>
             </div>
-            <button class="primary-button" type="submit">Search local index</button>
+            <button class="primary-button" type="submit">Search academic index</button>
           </form>
           <div class="search-note">
             <span class="eyebrow">external policy</span>
@@ -130,23 +130,23 @@
         </aside>
 
         <div class="search-output-grid">
-        <section class="result-panel local-results-panel">
-          <div class="library-toolbar">
-            <span class="label">Local ChemVault results</span>
-            <strong id="searchSummary">0 local matches</strong>
-          </div>
-          <div class="local-result-grid" id="localSearchResults"></div>
-        </section>
+          <section class="result-panel local-results-panel">
+            <div class="library-toolbar">
+              <span class="label">Search results</span>
+              <strong id="searchSummary">0 results</strong>
+            </div>
+            <div class="live-enrichment-status" id="liveEnrichmentStatus">Enter an academic query to search ChemVault first, then NIH PubChem and PubMed when local data is missing.</div>
+            <div class="local-result-grid academic-result-list" id="localSearchResults"></div>
+          </section>
 
-        <section class="result-panel nih-import-panel" aria-live="polite">
-          <div class="library-toolbar">
-            <span class="label">NIH / PubChem imported data</span>
-            <button class="small-button" type="button" data-import-all hidden>Save all</button>
-          </div>
-          <div class="live-enrichment-status" id="liveEnrichmentStatus">Enter an academic query to import NIH/PubChem metadata into this page.</div>
-          <div class="live-enrichment-grid" id="liveEnrichmentResults"></div>
-          <div class="imported-records-panel" id="savedExternalRecords"></div>
-        </section>
+          <section class="result-panel nih-import-panel" aria-live="polite">
+            <div class="library-toolbar">
+              <span class="label">Academic sync</span>
+              <button class="small-button" type="button" data-import-all hidden>Save all</button>
+            </div>
+            <div class="live-enrichment-grid" id="liveEnrichmentResults"></div>
+            <div class="imported-records-panel" id="savedExternalRecords"></div>
+          </section>
         </div>
       </div>
     </section>

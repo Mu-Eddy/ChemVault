@@ -20,16 +20,13 @@
     }
 
     const themeButton = $("[data-shell-action='theme'], [data-home-action='theme']");
-    const savedTheme = localStorage.getItem("chemvault-theme");
-    const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
-    const initialTheme = savedTheme || (prefersLight ? "light" : "dark");
-    document.body.classList.toggle("light-mode", initialTheme === "light");
+    document.body.classList.add("light-mode");
+    localStorage.setItem("chemvault-theme", "light");
 
     if (themeButton) {
       themeButton.addEventListener("click", () => {
-        const current = document.body.classList.contains("light-mode") ? "dark" : "light";
-        document.body.classList.toggle("light-mode", current === "light");
-        localStorage.setItem("chemvault-theme", current);
+        document.body.classList.add("light-mode");
+        localStorage.setItem("chemvault-theme", "light");
       });
     }
 
@@ -149,7 +146,7 @@
       .slice(0, 4);
     const localLinks = hits.map((item) => `
       <a class="home-quick-card" href="${item.href}">
-        <img src="${escapeHTML(thumbnailFor(item))}" data-fallback-src="${escapeHTML(placeholderImage(item.type, item.title))}" alt="" loading="lazy" />
+        <img src="${escapeHTML(thumbnailFor(item))}" data-fallback-src="${escapeHTML(placeholderImage(item.type, item.title))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
         <span>${escapeHTML(item.type)}</span>
         <strong>${escapeHTML(item.title)}</strong>
       </a>
@@ -191,7 +188,7 @@
       panel.classList.add("active");
       panel.innerHTML = hits.length ? hits.map((hit) => `
         <a class="search-hit" href="${hit.href}"${hit.external ? ' target="_blank" rel="noreferrer"' : ""}>
-          <img src="${escapeHTML(thumbnailFor(hit))}" data-fallback-src="${escapeHTML(placeholderImage(hit.type, hit.title))}" alt="" loading="lazy" />
+          <img src="${escapeHTML(thumbnailFor(hit))}" data-fallback-src="${escapeHTML(placeholderImage(hit.type, hit.title))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
           <span>${escapeHTML(hit.type)}</span>
           <strong>${escapeHTML(hit.title)}</strong>
           <small>${escapeHTML(hit.body)}</small>

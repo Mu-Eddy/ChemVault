@@ -7,7 +7,7 @@
   border-bottom: 1px solid var(--line);
   background:
     linear-gradient(135deg, rgba(82, 199, 184, 0.075), transparent 38%),
-    linear-gradient(90deg, rgba(232, 188, 85, 0.055), transparent 58%),
+    linear-gradient(90deg, rgba(0, 113, 227, 0.055), transparent 58%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent);
 }
 
@@ -57,7 +57,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background:
-    linear-gradient(145deg, rgba(232, 188, 85, 0.055), transparent 42%),
+    linear-gradient(145deg, rgba(0, 113, 227, 0.055), transparent 42%),
     color-mix(in srgb, var(--surface) 92%, transparent);
   padding: 16px;
   min-height: 178px;
@@ -92,7 +92,7 @@
 .portal-card-featured {
   border-color: color-mix(in srgb, var(--amber) 36%, var(--line));
   background:
-    linear-gradient(145deg, rgba(232, 188, 85, 0.1), transparent 44%),
+    linear-gradient(145deg, rgba(0, 113, 227, 0.1), transparent 44%),
     linear-gradient(180deg, rgba(82, 199, 184, 0.055), transparent 58%),
     color-mix(in srgb, var(--surface) 92%, transparent);
 }
@@ -204,13 +204,13 @@
 .graph-board {
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #0d0f0e;
+  background: #ffffff;
   min-height: 520px;
   overflow: hidden;
 }
 
 body.light-mode .graph-board {
-  background: #f1eadc;
+  background: #f5f5f7;
 }
 
 .graph-board canvas {
@@ -272,7 +272,7 @@ body.light-mode .graph-board {
   border-bottom: 1px solid var(--line);
   background:
     linear-gradient(135deg, rgba(82, 199, 184, 0.1), transparent 32%),
-    linear-gradient(90deg, rgba(232, 188, 85, 0.08), transparent 58%),
+    linear-gradient(90deg, rgba(0, 113, 227, 0.08), transparent 58%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
 }
 
@@ -583,7 +583,7 @@ body.light-mode .graph-board {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background:
-    linear-gradient(145deg, rgba(232, 188, 85, 0.055), transparent 46%),
+    linear-gradient(145deg, rgba(0, 113, 227, 0.055), transparent 46%),
     color-mix(in srgb, var(--surface) 94%, transparent);
   padding: 15px;
   box-shadow: none;
@@ -921,7 +921,7 @@ body.light-mode .graph-board {
 }
 
 .workbench-tab.active {
-  color: #171614;
+  color: #ffffff;
   background: var(--amber);
   border-color: transparent;
 }
@@ -1551,4 +1551,246 @@ body.light-mode .graph-board {
   background: #ffffff;
   border-color: rgba(0, 0, 0, 0.12);
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.08);
+}
+
+/* Search results now read like an academic database page, with Apple-style chrome. */
+body.page-shell,
+body.light-mode {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+
+.page-shell .page-hero,
+.page-shell .section,
+.page-shell .section-tint,
+.page-shell .search-studio-section {
+  background: #f5f5f7;
+}
+
+.page-shell .page-hero {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
+}
+
+.page-shell .page-panel,
+.page-shell .result-panel,
+.page-shell .page-index-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.07);
+}
+
+.page-shell .search-workbench-grid {
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.page-shell .search-output-grid {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.page-shell .local-results-panel {
+  overflow: hidden;
+  padding: 0;
+}
+
+.page-shell .local-results-panel .library-toolbar {
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.page-shell .local-results-panel .live-enrichment-status {
+  margin: 0;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: #fbfbfd;
+  color: #6e6e73;
+  padding: 12px 22px;
+}
+
+.page-shell .academic-result-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.page-shell .academic-result-item {
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  min-height: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: none;
+  padding: 22px;
+}
+
+.page-shell .academic-result-item:last-child {
+  border-bottom: 0;
+}
+
+.page-shell .academic-result-item:hover,
+.page-shell .academic-result-item:focus-visible {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: #fbfbfd;
+  box-shadow: none;
+  transform: none;
+}
+
+.page-shell .academic-result-media {
+  width: 156px;
+  aspect-ratio: 4 / 3;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #f5f5f7;
+}
+
+.page-shell .academic-result-media img {
+  object-fit: contain;
+  padding: 0;
+  background: #ffffff;
+}
+
+.page-shell .academic-result-body {
+  display: grid;
+  gap: 8px;
+}
+
+.page-shell .result-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.page-shell .source-pill,
+.page-shell .result-tag-row span,
+.page-shell .result-formula {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  background: #f5f5f7;
+  color: #6e6e73;
+  padding: 3px 9px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.page-shell .source-pill.source-local {
+  color: #1d1d1f;
+  background: #f5f5f7;
+}
+
+.page-shell .source-pill.source-imported {
+  border-color: rgba(0, 113, 227, 0.24);
+  color: #0066cc;
+  background: rgba(0, 113, 227, 0.07);
+}
+
+.page-shell .source-pill.source-external {
+  color: #515154;
+}
+
+.page-shell .result-title {
+  color: #0066cc;
+  font-size: 1.22rem;
+  line-height: 1.22;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.page-shell .result-snippet {
+  max-width: 78ch;
+  color: #424245;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.page-shell .result-meta {
+  color: #6e6e73;
+  font-size: 0.84rem;
+}
+
+.page-shell .result-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.page-shell .result-formula {
+  gap: 6px;
+  color: #1d1d1f;
+}
+
+.page-shell .result-formula span {
+  color: #6e6e73;
+}
+
+.page-shell .result-formula code {
+  color: #1d1d1f;
+  font-size: 0.82rem;
+}
+
+.page-shell .nih-import-panel {
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: none;
+}
+
+.page-shell .live-enrichment-grid {
+  margin-top: 10px;
+}
+
+.page-shell .academic-sync-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(0, 113, 227, 0.18);
+  border-radius: 8px;
+  background: rgba(0, 113, 227, 0.05);
+  padding: 14px;
+}
+
+.page-shell .academic-sync-card strong {
+  color: #1d1d1f;
+}
+
+.page-shell .academic-sync-card p {
+  margin: 0;
+  color: #6e6e73;
+}
+
+@media (max-width: 900px) {
+  .page-shell .search-workbench-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-shell .academic-result-item {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .page-shell .academic-result-media {
+    width: 112px;
+  }
+}
+
+@media (max-width: 620px) {
+  .page-shell .academic-result-item {
+    grid-template-columns: 1fr;
+  }
+
+  .page-shell .academic-result-media {
+    width: 100%;
+    max-width: 220px;
+  }
 }

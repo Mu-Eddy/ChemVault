@@ -16,12 +16,11 @@
   }
 
   function wireShellTheme() {
-    if (localStorage.getItem("chemvault-theme") === "light") {
-      document.body.classList.add("light-mode");
-    }
+    document.body.classList.add("light-mode");
+    localStorage.setItem("chemvault-theme", "light");
     document.querySelector("[data-shell-action='theme']")?.addEventListener("click", () => {
-      document.body.classList.toggle("light-mode");
-      localStorage.setItem("chemvault-theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+      document.body.classList.add("light-mode");
+      localStorage.setItem("chemvault-theme", "light");
     });
   }
 
@@ -82,7 +81,7 @@
       panel.classList.add("active");
       panel.innerHTML = hits.length ? hits.map((hit) => `
         <a class="search-hit" href="${hit.href}"${hit.external ? ' target="_blank" rel="noreferrer"' : ""}>
-          <img src="${escapeHTML(thumbnailFor(hit))}" data-fallback-src="${escapeHTML(placeholderImage(hit.type, hit.title))}" alt="" loading="lazy" />
+          <img src="${escapeHTML(thumbnailFor(hit))}" data-fallback-src="${escapeHTML(placeholderImage(hit.type, hit.title))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
           <span>${escapeHTML(hit.type)}</span>
           <strong>${escapeHTML(hit.title)}</strong>
           <small>${escapeHTML(hit.body)}</small>

@@ -47,11 +47,13 @@
     const body = record.body || record.subtitle || "";
     const href = record.href || `record.html?type=${encode(type)}&id=${encode(record.id)}`;
     const external = /^https?:\/\//i.test(href);
+    const raw = record.raw || {};
     return {
       id: record.id,
       recordType: type,
       type: typeLabel,
       title: record.title || record.id,
+      subtitle: record.subtitle || "",
       body,
       tags: record.tags || [],
       href,
@@ -60,19 +62,27 @@
       family: record.family || "",
       risk: record.risk || "",
       maturity: Number(record.maturity || 0),
-      sourceKind: record.raw?.source ? "imported" : fallbackSource,
+      formula: record.formula || raw.formula || "",
+      sourceHref: record.sourceHref || record.source_href || "",
+      sourceKind: raw.source ? "imported" : fallbackSource,
       imageUrl: record.imageUrl || record.image_url || record.raw?.imageUrl || "",
-      searchText: record.searchText || compact(`${typeLabel} ${record.title} ${body} ${(record.tags || []).join(" ")}`)
+      raw,
+      updatedAt: record.updatedAt || record.updated_at || "",
+      searchText: record.searchText || compact(`${typeLabel} ${record.title} ${record.subtitle || ""} ${body} ${record.formula || ""} ${(record.tags || []).join(" ")}`)
     };
   }
 
   function thumbnailFor(item) {
-    if (item.imageUrl) return item.imageUrl;
+    if (item.imageUrl) return displayImageUrl(item.imageUrl);
     const type = `${item.recordType || ""} ${item.type || ""}`.toLowerCase();
     if ((type.includes("compound") || type.includes("reagent")) && item.title) {
-      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(item.title)}/PNG?record_type=2d&image_size=small`;
+      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(item.title)}/PNG?record_type=2d&image_size=large`;
     }
     return placeholderImage(item.type || item.recordType || "Record", item.title || "ChemVault", item.family || item.domain || "");
+  }
+
+  function displayImageUrl(url) {
+    return String(url || "").replace("image_size=small", "image_size=large");
   }
 
   function placeholderImage(type, title, subtitle = "") {
@@ -120,6 +130,10 @@
         family: record.family || "",
         risk: record.risk || "",
         maturity: Number(record.maturity || 0),
+        formula: record.formula || "",
+        subtitle: record.subtitle || "",
+        sourceHref: record.sourceHref || "",
+        raw: record.raw || {},
         sourceKind: record.external ? "imported" : "curated",
         imageUrl: record.imageUrl || record.raw?.imageUrl || "",
         searchText: record.searchText || compact(`${record.title} ${record.body} ${(record.tags || []).join(" ")}`)
@@ -324,37 +338,79 @@
       .map((row) => row.item);
 
     if (summary) {
-      const countText = rows.length === 1 ? "1 local match" : `${rows.length} local matches`;
+      const countText = rows.length === 1 ? "1 result" : `${rows.length} results`;
       const filterText = [scope !== "all" ? scope : "", filters.facet !== "all" ? filters.facet : "", filters.tag !== "all" ? filters.tag : ""].filter(Boolean).join(" · ");
-      summary.textContent = `${query ? `${countText} for "${query}"` : `${countText} across the local knowledge base`}${filterText ? ` · ${filterText}` : ""}`;
+      summary.textContent = `${query ? `${countText} for "${query}"` : `${countText} across ChemVault and checked academic imports`}${filterText ? ` · ${filterText}` : ""}`;
     }
 
     if (!rows.length) {
       panel.innerHTML = `
         <div class="empty-state">
-          <span class="eyebrow">Local database boundary</span>
-          <h3>No strong local match</h3>
-          <p>The query is outside the current curated ChemVault index. NIH/PubChem imports are displayed in the panel beside this local result window.</p>
+          <span class="eyebrow">Academic search boundary</span>
+          <h3>No indexed result yet</h3>
+          <p>ChemVault will check NIH PubChem and PubMed when the local database has no strong match. Accepted academic records appear in this same result list.</p>
         </div>
       `;
       return 0;
     }
 
-    panel.innerHTML = rows.map((item) => `
-      <a class="local-result-card" href="${item.href}"${item.external ? ' target="_blank" rel="noreferrer"' : ""}>
-        <span class="result-thumb" aria-hidden="true">
-          <img src="${esc(thumbnailFor(item))}" data-fallback-src="${esc(placeholderImage(item.type, item.title, item.family || item.domain))}" alt="" loading="lazy" />
-        </span>
-        <span class="local-result-copy">
-          <span class="eyebrow">${esc(item.type)}</span>
-          <strong>${esc(item.title)}</strong>
-          <span>${esc(item.body).slice(0, 260)}${item.body.length > 260 ? "..." : ""}</span>
-          <small>${[item.domain || item.family, item.maturity ? `${item.maturity}% maturity` : "", (item.tags || []).slice(0, 3).join(", ")].filter(Boolean).map(esc).join(" · ")}</small>
-        </span>
-      </a>
-    `).join("");
+    panel.innerHTML = rows.map((item) => academicResultItem(item)).join("");
     wireImageFallbacks(panel);
     return rows.length;
+  }
+
+  function academicResultItem(item) {
+    const fallback = placeholderImage(item.type, item.title, item.family || item.domain || item.formula || "");
+    const body = item.body || item.subtitle || "Checked academic metadata.";
+    const tags = resultTags(item);
+    return `
+      <a class="local-result-card academic-result-item" href="${esc(item.href)}"${item.external ? ' target="_blank" rel="noreferrer"' : ""}>
+        <span class="result-thumb academic-result-media" aria-hidden="true">
+          <img src="${esc(thumbnailFor(item))}" data-fallback-src="${esc(fallback)}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+        </span>
+        <span class="local-result-copy academic-result-body">
+          <span class="result-kicker">
+            <span class="eyebrow">${esc(item.type)}</span>
+            <span class="source-pill ${esc(sourcePillClass(item))}">${esc(resultSourceLabel(item))}</span>
+          </span>
+          <strong class="result-title">${esc(item.title)}</strong>
+          <span class="result-snippet">${esc(body).slice(0, 420)}${body.length > 420 ? "..." : ""}</span>
+          ${item.formula ? `<span class="result-formula"><span>Formula</span><code>${esc(item.formula)}</code></span>` : ""}
+          <span class="result-meta">${resultMeta(item).map(esc).join(" · ")}</span>
+          ${tags.length ? `<span class="result-tag-row">${tags.map((tag) => `<span>${esc(tag)}</span>`).join("")}</span>` : ""}
+        </span>
+      </a>
+    `;
+  }
+
+  function resultSourceLabel(item) {
+    if (item.raw?.source) return `NIH / ${item.raw.source}`;
+    if (item.sourceKind === "imported") return item.external ? "Academic import" : "Saved import";
+    if (item.external) return "External source";
+    return "ChemVault local";
+  }
+
+  function sourcePillClass(item) {
+    if (item.raw?.source || item.sourceKind === "imported") return "source-imported";
+    if (item.external) return "source-external";
+    return "source-local";
+  }
+
+  function resultMeta(item) {
+    return [
+      item.domain || item.family || "",
+      item.maturity ? `${item.maturity}% maturity` : "",
+      item.raw?.cid ? `CID ${item.raw.cid}` : "",
+      item.raw?.pmid ? `PMID ${item.raw.pmid}` : "",
+      item.id ? `Record ${item.id}` : ""
+    ].filter(Boolean);
+  }
+
+  function resultTags(item) {
+    return unique([
+      item.formula,
+      ...(item.tags || [])
+    ]).slice(0, 6);
   }
 
   async function runSearch() {
@@ -423,7 +479,7 @@
     }
 
     if (localCount > 0) {
-      status.textContent = `${localCount} local ChemVault match${localCount === 1 ? "" : "es"} found. Local data is shown first; academic auto-import runs only when there is no local match.`;
+      status.textContent = `${localCount} ChemVault result${localCount === 1 ? "" : "s"} shown inline with structure/source visuals. Academic auto-import runs only when there is no local match.`;
       panel.innerHTML = "";
       renderImportedRecords();
       return;
@@ -443,7 +499,7 @@
         const payload = await window.CHEMVAULT_API.enrichRecords({ q: query, limit: 8 }, { signal });
         if (payload.records?.length) {
           backendRecords = mergeIndexRows(backendRecords, payload.records.map((record) => toIndexRecord(record, payload.source === "academic-auto-d1" ? "curated" : "imported")));
-          renderLocal(query, $("#searchScope")?.value || "all");
+          localCount = renderLocal(query, $("#searchScope")?.value || "all");
         }
         if (payload.records?.length || payload.meta?.status !== "browser-fallback") {
           liveCache.set(cacheKey, payload);
@@ -571,12 +627,11 @@
 
     if (Array.isArray(result.records)) {
       latestLiveCandidates = result.records.map((record) => toSessionRecord(record, query));
-      cards.push(...result.records.map((record, index) => academicRecordCard(record, index)));
       const stored = Number(result.meta?.stored || 0);
-      status.textContent = cards.length
-        ? `${cards.length} checked academic record${cards.length === 1 ? "" : "s"} rendered for "${query}". ${stored ? `${stored} added to D1.` : "D1 storage was not available or no new record was stored."}`
+      status.textContent = result.records.length
+        ? `${result.records.length} checked academic record${result.records.length === 1 ? "" : "s"} added to the search results list for "${query}". ${stored ? `${stored} stored in D1.` : "D1 storage was not available or no new record was stored."}`
         : `No checked PubChem or PubMed metadata returned for "${query}". Use the outbound database links below.`;
-      panel.innerHTML = cards.length ? cards.join("") : fallbackCards(query, "No metadata was returned. Use direct NIH/PubChem search links.");
+      panel.innerHTML = result.records.length ? academicSyncSummary(result.records.length, stored) : fallbackCards(query, "No metadata was returned. Use direct NIH/PubChem search links.");
       toggleImportAll(Boolean(latestLiveCandidates.length));
       wireImportButtons();
       wireImageFallbacks(panel);
@@ -586,11 +641,13 @@
 
     if (result.compound) {
       const compound = result.compound;
-      latestLiveCandidates.push(toImportedCompound(compound, query));
+      const imported = toImportedCompound(compound, query);
+      latestLiveCandidates.push(imported);
+      backendRecords = mergeIndexRows(backendRecords, [sessionRecordToIndex(imported)]);
       cards.push(`
         <article class="live-card live-card-wide">
           <div class="live-card-media">
-            <img src="${esc(compound.imageUrl || placeholderImage("PubChem", compound.title, compound.formula))}" data-fallback-src="${esc(placeholderImage("PubChem", compound.title, compound.formula))}" alt="" loading="lazy" />
+            <img src="${esc(compound.imageUrl || placeholderImage("PubChem", compound.title, compound.formula))}" data-fallback-src="${esc(placeholderImage("PubChem", compound.title, compound.formula))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
           </div>
           <div class="live-card-head">
             <span class="eyebrow">NIH / NCBI PubChem import</span>
@@ -620,11 +677,13 @@
     }
 
     (result.literature || []).forEach((article) => {
-      const index = latestLiveCandidates.push(toImportedArticle(article, query)) - 1;
+      const imported = toImportedArticle(article, query);
+      const index = latestLiveCandidates.push(imported) - 1;
+      backendRecords = mergeIndexRows(backendRecords, [sessionRecordToIndex(imported)]);
       cards.push(`
         <article class="live-card">
           <div class="live-card-media">
-            <img src="${esc(article.imageUrl || placeholderImage("PubMed", article.title, article.journal))}" data-fallback-src="${esc(placeholderImage("PubMed", article.title, article.journal))}" alt="" loading="lazy" />
+            <img src="${esc(article.imageUrl || placeholderImage("PubMed", article.title, article.journal))}" data-fallback-src="${esc(placeholderImage("PubMed", article.title, article.journal))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
           </div>
           <div class="live-card-head">
             <span class="eyebrow">NIH / NLM PubMed metadata</span>
@@ -643,14 +702,41 @@
     });
 
     const count = cards.length;
+    if (count) renderLocal(query, $("#searchScope")?.value || "all");
     status.textContent = count
-      ? `${count} external records rendered for "${query}". ${localCount ? "Use them to extend the local context." : "These records fill the local database gap for this query."}`
+      ? `${count} external record${count === 1 ? "" : "s"} added to the search results list for "${query}". ${localCount ? "Use them to extend the local context." : "These records fill the local database gap for this query."}`
       : `No PubChem compound or PubMed article metadata returned for "${query}". Use the outbound database links below.`;
-    panel.innerHTML = cards.length ? cards.join("") : fallbackCards(query, "No metadata was returned. Use direct NIH/PubChem search links.");
+    panel.innerHTML = cards.length ? academicSyncSummary(count, 0) : fallbackCards(query, "No metadata was returned. Use direct NIH/PubChem search links.");
     toggleImportAll(Boolean(latestLiveCandidates.length));
     wireImportButtons();
     wireImageFallbacks(panel);
     renderImportedRecords();
+  }
+
+  function academicSyncSummary(count, stored) {
+    return `
+      <div class="academic-sync-card">
+        <span class="eyebrow">NIH academic sync</span>
+        <strong>${count} checked record${count === 1 ? "" : "s"} shown in results</strong>
+        <p>${stored ? `${stored} new record${stored === 1 ? "" : "s"} were added to D1.` : "Records are rendered inline with the search results; session save remains available below."}</p>
+      </div>
+    `;
+  }
+
+  function sessionRecordToIndex(record) {
+    const isArticle = compact(record.type).includes("article");
+    const source = isArticle ? "PubMed" : "PubChem";
+    return toIndexRecord({
+      id: record.id,
+      type: isArticle ? "literature" : "compound",
+      typeLabel: isArticle ? "PubMed article" : "PubChem compound",
+      title: record.title,
+      body: record.body,
+      tags: record.tags,
+      href: record.href,
+      imageUrl: record.imageUrl,
+      raw: { source }
+    }, "imported");
   }
 
   function academicRecordCard(record, index) {
@@ -659,7 +745,7 @@
     return `
       <article class="live-card live-card-imported">
         <div class="live-card-media">
-          <img src="${esc(image)}" data-fallback-src="${esc(fallback)}" alt="" loading="lazy" />
+          <img src="${esc(image)}" data-fallback-src="${esc(fallback)}" alt="" loading="lazy" referrerpolicy="no-referrer" />
         </div>
         <div class="live-card-head">
           <span class="eyebrow">${esc(record.typeLabel || record.type || "Academic import")}</span>
@@ -828,7 +914,7 @@
       <div class="imported-record-list">
         ${records.slice(0, 8).map((record) => `
           <a href="${record.href}" target="_blank" rel="noreferrer">
-            <img src="${esc(record.imageUrl || placeholderImage(record.type, record.title))}" data-fallback-src="${esc(placeholderImage(record.type, record.title))}" alt="" loading="lazy" />
+            <img src="${esc(record.imageUrl || placeholderImage(record.type, record.title))}" data-fallback-src="${esc(placeholderImage(record.type, record.title))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
             <span>${esc(record.type)}</span>
             <strong>${esc(record.title)}</strong>
           </a>

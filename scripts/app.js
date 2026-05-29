@@ -882,8 +882,8 @@
   }
 
   function toggleTheme() {
-    document.body.classList.toggle("light-mode");
-    localStorage.setItem("chemvault-theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+    document.body.classList.add("light-mode");
+    localStorage.setItem("chemvault-theme", "light");
   }
 
   function getSaved() {
@@ -959,7 +959,6 @@
     return [...document.querySelectorAll(selector)];
   }
 
-  if (localStorage.getItem("chemvault-theme") === "light") {
-    document.body.classList.add("light-mode");
-  }
+  document.body.classList.add("light-mode");
+  localStorage.setItem("chemvault-theme", "light");
 }());

@@ -386,7 +386,7 @@
   function recordImage(type, title, subtitle = "") {
     const key = compact(`${type} ${title}`);
     if ((key.includes("reagent") || key.includes("compound")) && title) {
-      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(title)}/PNG?record_type=2d&image_size=small`;
+      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(title)}/PNG?record_type=2d&image_size=large`;
     }
     return placeholderImage(type || "Record", title || "ChemVault", subtitle || "");
   }
