@@ -1231,6 +1231,50 @@ body.light-mode .graph-board {
   display: block;
 }
 
+.record-focus-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  object-fit: contain;
+  margin-bottom: 14px;
+}
+
+.record-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.record-field-grid div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px;
+  overflow-wrap: anywhere;
+}
+
+.record-field-grid strong {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.record-field-grid span,
+.record-field-grid a {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.record-field-grid a {
+  color: var(--accent);
+}
+
 .related-record-card {
   display: grid;
   gap: 6px;
@@ -1630,6 +1674,7 @@ body.light-mode {
   box-shadow: none;
   padding: 22px;
   cursor: pointer;
+  color: inherit;
 }
 
 .page-shell .academic-result-item:last-child {
@@ -1815,84 +1860,6 @@ body.light-mode {
   align-items: center;
 }
 
-.record-detail-panel {
-  display: grid;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.record-detail-panel[hidden] {
-  display: none;
-}
-
-.record-detail-head,
-.record-detail-source-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.record-detail-panel h3 {
-  margin: 0;
-  color: #1d1d1f;
-  font-size: 1.2rem;
-}
-
-.record-detail-panel p {
-  margin: 0;
-  color: #6e6e73;
-}
-
-.record-detail-image {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  background: #ffffff;
-  object-fit: contain;
-}
-
-.record-detail-grid {
-  display: grid;
-  gap: 8px;
-}
-
-.record-detail-grid div,
-.record-detail-body {
-  display: grid;
-  gap: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.09);
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 10px;
-  overflow-wrap: anywhere;
-}
-
-.record-detail-grid strong,
-.record-detail-body strong {
-  color: #6e6e73;
-  font-size: 0.72rem;
-  text-transform: none;
-}
-
-.record-detail-grid span,
-.record-detail-grid a {
-  color: #1d1d1f;
-  font-size: 0.9rem;
-}
-
-.record-detail-grid a,
-.record-detail-source-row a {
-  color: #0066cc;
-}
-
-.detail-tags {
-  margin-top: 2px;
-}
-
 @media (max-width: 900px) {
   .page-shell .search-workbench-grid {
     grid-template-columns: 1fr;
@@ -1917,5 +1884,9 @@ body.light-mode {
   .page-shell .academic-result-media {
     width: 100%;
     max-width: 220px;
+  }
+
+  .record-field-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -1476,39 +1476,20 @@ td strong {
 
 .footer-grid {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   gap: 20px;
   align-items: center;
+  text-align: center;
 }
 
 .developer-footer-grid {
-  align-items: flex-start;
-}
-
-.developer-footer-grid > div:first-child {
-  max-width: 880px;
+  align-items: center;
 }
 
 .developer-footer-grid strong {
   display: block;
   color: var(--text);
-  margin-bottom: 8px;
-}
-
-.developer-footer-grid p {
-  color: var(--muted);
-  margin: 0 0 8px;
-}
-
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.footer-links a {
-  color: var(--muted);
-  padding: 8px 9px;
+  margin: 0;
 }
 
 .site-version {

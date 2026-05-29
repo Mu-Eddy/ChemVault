@@ -1,6 +1,7 @@
 (() => {
   const api = window.CHEMVAULT_RECORDS;
   const external = window.CHEMVAULT_EXTERNAL || { sources: [] };
+  const focusStoreKey = "chemvault-focus-record";
   const $ = (selector) => document.querySelector(selector);
   const esc = api?.esc || ((value) => String(value || ""));
   const encode = api?.encode || encodeURIComponent;
@@ -12,7 +13,9 @@
     }
     const params = new URLSearchParams(location.search);
     const records = api.buildRecords({ includeImported: true });
-    const record = api.findRecord(params.get("type"), params.get("id"), records)
+    const focusRecord = readFocusRecord(params.get("focus"));
+    const record = focusRecord
+      || api.findRecord(params.get("type"), params.get("id"), records)
       || findByQuery(params.get("q"), records);
 
     if (!record) {
@@ -38,27 +41,33 @@
     const related = api.relatedRecords(record, records, 10);
     const main = $("#recordMain");
     if (!main) return;
+    const image = record.imageUrl || api.recordImage(record.typeLabel || record.type, record.title, record.subtitle || record.family || record.domain || record.formula || "");
+    const sourceHref = record.sourceHref || record.raw?.href || record.href || "";
     main.innerHTML = `
       <section class="page-hero record-hero">
         <div class="container page-hero-grid">
           <div>
-            <p class="eyebrow">${esc(record.typeLabel || record.type)} · ChemVault record</p>
+            <p class="eyebrow">${esc(record.typeLabel || record.type)} · ${esc(sourceLabel(record))}</p>
             <h1>${esc(record.title)}</h1>
             ${record.subtitle ? `<p>${esc(record.subtitle)}</p>` : ""}
             <div class="hero-actions record-actions">
-              ${record.sourceHref ? `<a class="primary-button" href="${record.sourceHref}">Open source page</a>` : ""}
+              ${sourceHref ? `<a class="primary-button" href="${esc(sourceHref)}"${/^https?:\/\//i.test(sourceHref) ? ' target="_blank" rel="noreferrer"' : ""}>Open source page</a>` : ""}
               <a class="secondary-button" href="search.html?q=${encode(record.title)}">Search this topic</a>
               ${record.external && record.href ? `<a class="secondary-button" href="${record.href}" target="_blank" rel="noreferrer">Open external source</a>` : ""}
             </div>
           </div>
           <aside class="page-index-card record-index-card">
+            <img class="record-focus-image" src="${esc(image)}" data-fallback-src="${esc(api.recordImage(record.typeLabel || record.type, record.title, record.subtitle || ""))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
             <strong>Record status</strong>
             <div class="record-fact-grid">
               ${fact("Type", record.typeLabel)}
+              ${fact("Source", sourceLabel(record))}
               ${fact("Domain", record.domain || record.family || record.category)}
               ${fact("Formula", record.formula)}
               ${fact("Maturity", record.maturity ? `${record.maturity}%` : "")}
               ${fact("Risk", record.risk)}
+              ${fact("Check status", record.checkStatus)}
+              ${fact("Checked at", record.checkedAt)}
               ${fact("Version", api.version)}
             </div>
           </aside>
@@ -75,6 +84,25 @@
               </div>
               <p class="record-lead">${esc(record.body || record.subtitle || "No summary text is available for this record.")}</p>
               ${record.tags?.length ? `<div class="tag-row">${record.tags.slice(0, 18).map((tag) => `<span class="tag">${esc(tag)}</span>`).join("")}</div>` : ""}
+            </section>
+
+            <section class="record-panel">
+              <div class="library-toolbar">
+                <span class="label">Focused fields</span>
+                <strong>${esc(sourceLabel(record))}</strong>
+              </div>
+              <div class="record-field-grid">
+                ${field("title", record.title)}
+                ${field("subtitle", record.subtitle)}
+                ${field("type", record.typeLabel || record.type)}
+                ${field("formula", record.formula)}
+                ${field("tags", (record.tags || []).join(", "))}
+                ${field("body", record.body)}
+                ${field("imageUrl", image, true)}
+                ${field("sourceHref", sourceHref, true)}
+                ${field("checkStatus", record.checkStatus)}
+                ${field("checkedAt", record.checkedAt)}
+              </div>
             </section>
 
             <div class="record-section-grid">
@@ -113,6 +141,7 @@
         </div>
       </section>
     `;
+    wireRecordImages(main);
   }
 
   function relatedCard(record) {
@@ -163,8 +192,75 @@
     `;
   }
 
+  function readFocusRecord(focusKey) {
+    if (!focusKey) return null;
+    const payload = readStoredFocus(sessionStorage) || readStoredFocus(localStorage);
+    if (!payload || payload.key !== focusKey || !payload.record) return null;
+    return normaliseFocusRecord(payload.record);
+  }
+
+  function readStoredFocus(store) {
+    try {
+      return JSON.parse(store.getItem(focusStoreKey) || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function normaliseFocusRecord(record) {
+    const raw = record.raw || {};
+    const type = record.recordType || record.type || "search-result";
+    const typeLabel = record.typeLabel || record.type || "Search result";
+    const sourceHref = record.sourceHref || raw.href || record.href || "";
+    return {
+      ...record,
+      id: record.id || "focused-record",
+      type,
+      typeLabel,
+      title: record.title || "Focused record",
+      subtitle: record.subtitle || "",
+      body: record.body || record.subtitle || "",
+      tags: record.tags || [],
+      formula: record.formula || raw.formula || "",
+      sourceHref,
+      href: record.href || sourceHref,
+      external: /^https?:\/\//i.test(record.href || sourceHref),
+      imageUrl: record.imageUrl || raw.imageUrl || "",
+      dataSource: record.dataSource || raw.source || "Session import",
+      checkStatus: record.checkStatus || raw.checkStatus || (raw.source ? "accepted" : "Not available"),
+      checkedAt: record.checkedAt || raw.checkedAt || "Not available",
+      sections: [
+        { title: "Tags", items: record.tags || [] },
+        { title: "Source metadata", items: [raw.cid ? `CID ${raw.cid}` : "", raw.pmid ? `PMID ${raw.pmid}` : "", raw.doi ? `DOI ${raw.doi}` : ""].filter(Boolean) }
+      ],
+      raw
+    };
+  }
+
+  function sourceLabel(record) {
+    return record.dataSource || record.raw?.source || (record.external ? "Session import" : "Curated");
+  }
+
   function fact(label, value) {
     return value ? `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>` : "";
+  }
+
+  function field(label, value, link = false) {
+    const text = String(value || "").trim() || "Not available";
+    const content = link && /^https?:\/\//i.test(text)
+      ? `<a href="${esc(text)}" target="_blank" rel="noreferrer">${esc(text)}</a>`
+      : `<span>${esc(text)}</span>`;
+    return `<div><strong>${esc(label)}</strong>${content}</div>`;
+  }
+
+  function wireRecordImages(root) {
+    root.querySelectorAll("img[data-fallback-src]").forEach((image) => {
+      image.addEventListener("error", () => {
+        if (image.dataset.fallbackApplied) return;
+        image.dataset.fallbackApplied = "true";
+        image.src = image.dataset.fallbackSrc;
+      }, { once: true });
+    });
   }
 
   function externalUrl(source, query) {

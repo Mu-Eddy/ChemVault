@@ -7,6 +7,7 @@
   const materials = window.CHEMVAULT_MATERIALS || {};
   const external = window.CHEMVAULT_EXTERNAL || { sources: [] };
   const importedStoreKey = "chemvault-imported-records";
+  const focusStoreKey = "chemvault-focus-record";
   const liveCache = new Map();
   let liveController = null;
   let latestLiveCandidates = [];
@@ -386,7 +387,7 @@
     const body = item.body || item.subtitle || "Checked academic metadata.";
     const tags = resultTags(item);
     return `
-      <article class="local-result-card academic-result-item" role="button" tabindex="0" data-record-key="${esc(key)}">
+      <a class="local-result-card academic-result-item" href="${esc(focusRecordHref(item))}" data-record-key="${esc(key)}">
         <span class="result-thumb academic-result-media" aria-hidden="true">
           <img src="${esc(thumbnailFor(item))}" data-fallback-src="${esc(fallback)}" alt="" loading="lazy" referrerpolicy="no-referrer" />
         </span>
@@ -402,7 +403,7 @@
           ${tags.length ? `<span class="result-tag-row">${tags.map((tag) => `<span>${esc(tag)}</span>`).join("")}</span>` : ""}
           <span class="result-detail-link">View details</span>
         </span>
-      </article>
+      </a>
     `;
   }
 
@@ -438,66 +439,35 @@
     ]).slice(0, 6);
   }
 
-  function renderRecordDetail(record) {
-    const panel = $("#recordDetailPanel");
-    if (!panel || !record) return;
-    const image = thumbnailFor(record);
-    const sourceHref = record.sourceHref || record.raw?.href || record.href || "";
-    const checkStatus = record.checkStatus || record.raw?.checkStatus || (record.dataSource === "Curated" ? "curated" : "not checked");
-    const checkedAt = record.checkedAt || record.raw?.checkedAt || record.updatedAt || "";
-    const pmid = record.raw?.pmid || (record.id || "").replace(/^pubmed-/, "");
-    const cid = record.raw?.cid || (record.id || "").replace(/^pubchem-/, "");
-    panel.hidden = false;
-    panel.innerHTML = `
-      <div class="record-detail-head">
-        <span class="eyebrow">Record details</span>
-        <button class="text-button" type="button" data-close-record-detail>Close</button>
-      </div>
-      <img class="record-detail-image" src="${esc(image)}" data-fallback-src="${esc(placeholderImage(record.type, record.title, record.family || record.domain || record.formula))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
-      <h3>${esc(record.title)}</h3>
-      ${record.subtitle ? `<p>${esc(record.subtitle)}</p>` : ""}
-      <div class="record-detail-source-row">
-        <span class="source-pill ${esc(sourcePillClass(record))}">${esc(resultSourceLabel(record))}</span>
-        ${record.raw?.source === "PubMed" && pmid ? `<a href="${esc(sourceHref)}" target="_blank" rel="noreferrer">PMID ${esc(pmid)}</a>` : ""}
-        ${record.raw?.source === "PubChem" && cid ? `<a href="${esc(sourceHref)}" target="_blank" rel="noreferrer">CID ${esc(cid)}</a>` : ""}
-      </div>
-      <div class="record-detail-grid">
-        ${detailField("title", record.title)}
-        ${detailField("subtitle", record.subtitle)}
-        ${detailField("type", record.type)}
-        ${detailField("formula", record.formula)}
-        ${detailField("imageUrl", record.imageUrl || image)}
-        ${detailField("sourceHref", sourceHref, true)}
-        ${detailField("checkStatus", checkStatus)}
-        ${detailField("checkedAt", checkedAt)}
-      </div>
-      ${record.tags?.length ? `<div class="result-tag-row detail-tags">${record.tags.slice(0, 14).map((tag) => `<span>${esc(tag)}</span>`).join("")}</div>` : ""}
-      <section class="record-detail-body">
-        <strong>body</strong>
-        <p>${esc(record.body || "No body text available.")}</p>
-      </section>
-    `;
-    wireImageFallbacks(panel);
-  }
-
-  function detailField(label, value, link = false) {
-    const text = String(value || "").trim();
-    const display = text || "Not available";
-    const content = link && /^https?:\/\//i.test(text)
-      ? `<a href="${esc(text)}" target="_blank" rel="noreferrer">${esc(text)}</a>`
-      : `<span>${esc(display)}</span>`;
-    return `<div><strong>${esc(label)}</strong>${content}</div>`;
-  }
-
-  function hideRecordDetail() {
-    const panel = $("#recordDetailPanel");
-    if (!panel) return;
-    panel.hidden = true;
-    panel.innerHTML = "";
-  }
-
   function recordKey(item) {
     return `${item.recordType || item.type || "record"}:${item.id || compact(item.title)}`;
+  }
+
+  function focusRecordHref(item) {
+    return `record.html?focus=${encodeURIComponent(recordKey(item))}`;
+  }
+
+  function storeFocusRecord(record) {
+    if (!record) return;
+    const payload = {
+      key: recordKey(record),
+      record: {
+        ...record,
+        imageUrl: record.imageUrl || thumbnailFor(record),
+        sourceHref: record.sourceHref || record.raw?.href || record.href || "",
+        dataSource: resultSourceLabel(record)
+      },
+      storedAt: new Date().toISOString()
+    };
+    const serialized = JSON.stringify(payload);
+    try {
+      sessionStorage.setItem(focusStoreKey, serialized);
+      localStorage.setItem(focusStoreKey, serialized);
+    } catch {
+      try {
+        sessionStorage.setItem(focusStoreKey, serialized);
+      } catch {}
+    }
   }
 
   function setSearchStage(stage, detail = "") {
@@ -523,7 +493,6 @@
     if (liveController) liveController.abort();
     liveController = new AbortController();
     backendRecords = [];
-    hideRecordDetail();
     setSearchStage("Searching local records", query ? `Query: ${query}` : "Enter a query to search ChemVault records.");
     let localCount = renderLocal(query, scope ? scope.value : "all", filters);
     renderExternal(query);
@@ -1115,15 +1084,9 @@
     document.addEventListener("click", (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (!target) return;
-      const detailTrigger = target.closest("[data-record-key]");
-      if (detailTrigger) {
-        const record = currentResultMap.get(detailTrigger.dataset.recordKey);
-        if (record) renderRecordDetail(record);
-        return;
-      }
-      const closeDetail = target.closest("[data-close-record-detail]");
-      if (closeDetail) {
-        hideRecordDetail();
+      const focusTrigger = target.closest("[data-record-key]");
+      if (focusTrigger) {
+        storeFocusRecord(currentResultMap.get(focusTrigger.dataset.recordKey));
         return;
       }
       const importAll = target.closest("[data-import-all]");
@@ -1138,16 +1101,6 @@
       renderImportedRecords();
       runSearch();
     });
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      const target = event.target instanceof Element ? event.target : null;
-      const detailTrigger = target?.closest("[data-record-key]");
-      if (!detailTrigger) return;
-      event.preventDefault();
-      const record = currentResultMap.get(detailTrigger.dataset.recordKey);
-      if (record) renderRecordDetail(record);
-    });
-
     if (input) input.addEventListener("input", () => {
       window.clearTimeout(input._chemvaultTimer);
       input._chemvaultTimer = window.setTimeout(runSearch, 750);
