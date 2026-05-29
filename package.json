@@ -1,0 +1,18 @@
+{
+  "name": "chemvault",
+  "version": "0.2.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev . --d1 DB=chemvault",
+    "deploy": "wrangler pages deploy . --project-name chemvault",
+    "deploy:pages": "wrangler pages deploy . --project-name chemvault",
+    "seed:build": "node scripts/export-d1-seed.mjs",
+    "d1:schema": "wrangler d1 execute chemvault --file=schema.sql",
+    "d1:seed": "npm run seed:build && wrangler d1 execute chemvault --file=seed.sql",
+    "d1:migrate:images": "wrangler d1 execute chemvault --file=migrations/0001_add_record_images.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.95.0"
+  }
+}

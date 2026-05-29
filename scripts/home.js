@@ -1,0 +1,284 @@
+(() => {
+  const data = window.CHEMVAULT_DATA || {};
+  const materialsData = window.CHEMVAULT_MATERIALS || {};
+  const external = window.CHEMVAULT_EXTERNAL || { sources: [] };
+
+  const $ = (selector) => document.querySelector(selector);
+  const encode = (value) => encodeURIComponent((value || "").trim());
+  const normalise = (value) => String(value || "").toLowerCase();
+
+  const count = (items) => Array.isArray(items) ? items.length : 0;
+
+  function initShell() {
+    const header = $(".site-header");
+    const navToggle = $(".menu-toggle");
+    if (header && navToggle) {
+      navToggle.addEventListener("click", () => {
+        const expanded = header.classList.toggle("nav-open");
+        navToggle.setAttribute("aria-expanded", String(expanded));
+      });
+    }
+
+    const themeButton = $("[data-shell-action='theme'], [data-home-action='theme']");
+    const savedTheme = localStorage.getItem("chemvault-theme");
+    const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+    const initialTheme = savedTheme || (prefersLight ? "light" : "dark");
+    document.body.classList.toggle("light-mode", initialTheme === "light");
+
+    if (themeButton) {
+      themeButton.addEventListener("click", () => {
+        const current = document.body.classList.contains("light-mode") ? "dark" : "light";
+        document.body.classList.toggle("light-mode", current === "light");
+        localStorage.setItem("chemvault-theme", current);
+      });
+    }
+
+    document.querySelectorAll(".site-nav a").forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      link.toggleAttribute("aria-current", href.endsWith("index.html"));
+    });
+  }
+
+  function localIndex() {
+    const records = window.CHEMVAULT_RECORDS;
+    if (records?.buildRecords) {
+      return records.buildRecords({ includeImported: true }).map((item) => ({
+        type: item.typeLabel || item.type,
+        title: item.title,
+        body: item.body || item.subtitle || "",
+        href: item.external ? item.href : records.recordUrl(item.type, item.id),
+        external: item.external,
+        imageUrl: item.imageUrl || item.raw?.imageUrl || ""
+      }));
+    }
+    const rows = [];
+    (data.reagents || []).forEach((item) => rows.push({
+      type: "Reagent dossier",
+      title: item.name,
+      body: [item.category, item.use, item.mechanism].filter(Boolean).join(" | "),
+      href: `pages/reagents.html?id=${item.id}`
+    }));
+    (data.reactionSystems || []).forEach((item) => rows.push({
+      type: "Reaction system",
+      title: item.name,
+      body: [item.className, item.domain, ...(item.conditions || []), ...(item.readouts || [])].filter(Boolean).join(" | "),
+      href: `pages/workbench.html?id=${item.id}`
+    }));
+    (data.reactants || []).forEach((item) => rows.push({
+      type: "Reactant class",
+      title: item.name,
+      body: [item.className, ...(item.functionalGroups || []), ...(item.compatibleMethods || [])].filter(Boolean).join(" | "),
+      href: `pages/workbench.html?q=${encode(item.name)}`
+    }));
+    (data.compounds || []).forEach((item) => rows.push({
+      type: "Compound record",
+      title: item.name,
+      body: [item.formula, item.family, item.summary, ...(item.synonyms || [])].filter(Boolean).join(" | "),
+      href: `pages/search.html?q=${encode(item.name)}`
+    }));
+    (materialsData.materials || []).forEach((item) => rows.push({
+      type: "Material profile",
+      title: item.name,
+      body: [item.family, item.summary, (item.applications || []).slice(0, 2).join(", ")].filter(Boolean).join(" | "),
+      href: `pages/materials.html?id=${item.id}`
+    }));
+    (data.mechanisms || []).forEach((item) => rows.push({
+      type: "Mechanism atlas",
+      title: item.name,
+      body: [item.summary, (item.tags || []).join(", ")].filter(Boolean).join(" | "),
+      href: `pages/atlas.html?id=${item.id}`
+    }));
+    (data.concepts || []).forEach((item) => rows.push({
+      type: "Concept note",
+      title: item.term,
+      body: item.definition,
+      href: `pages/library.html?q=${encode(item.term)}`
+    }));
+    return rows;
+  }
+
+  function renderMetrics() {
+    const metrics = {
+      metricSystems: count(data.reactionSystems),
+      metricReactants: count(data.reactants),
+      metricReagents: count(data.reagents),
+      metricCompounds: count(data.compounds),
+      metricMaterials: count(materialsData.materials),
+      metricMechanisms: count(data.mechanisms),
+      metricSources: count(external.sources)
+    };
+    Object.entries(metrics).forEach(([id, value]) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = value;
+    });
+  }
+
+  function externalUrl(source, query) {
+    const encoded = encode(query);
+    if (!encoded) return source.baseUrl;
+    return source.queryUrl.replace("{query}", encoded);
+  }
+
+  function renderGateway(query = "") {
+    const gateway = $("#externalGateway");
+    if (!gateway) return;
+    gateway.innerHTML = external.sources.map((source) => `
+      <a class="external-source-card" href="${externalUrl(source, query)}" target="_blank" rel="noreferrer">
+        <span class="eyebrow">${source.owner}</span>
+        <strong>${source.name}</strong>
+        <span>${source.scope}</span>
+      </a>
+    `).join("");
+  }
+
+  function renderQuickLinks(query = "") {
+    const panel = $("#homeQuickLinks");
+    if (!panel) return;
+    const term = normalise(query);
+    if (!term) {
+      panel.innerHTML = `
+        <a href="pages/reagents.html">Browse reagent dossiers</a>
+        <a href="pages/materials.html">Browse materials profiles</a>
+        <a href="pages/search.html">Open academic search</a>
+      `;
+      return;
+    }
+
+    const hits = localIndex()
+      .filter((item) => normalise(`${item.title} ${item.type} ${item.body}`).includes(term))
+      .slice(0, 4);
+    const localLinks = hits.map((item) => `
+      <a class="home-quick-card" href="${item.href}">
+        <img src="${escapeHTML(thumbnailFor(item))}" data-fallback-src="${escapeHTML(placeholderImage(item.type, item.title))}" alt="" loading="lazy" />
+        <span>${escapeHTML(item.type)}</span>
+        <strong>${escapeHTML(item.title)}</strong>
+      </a>
+    `).join("");
+    panel.innerHTML = `
+      ${localLinks || `<a href="pages/search.html?q=${encode(query)}">No local preview matches. Open academic search.</a>`}
+      <a href="${externalUrl(external.sources[0], query)}" target="_blank" rel="noreferrer">Continue in PubMed</a>
+      <a href="${externalUrl(external.sources[1], query)}" target="_blank" rel="noreferrer">Continue in PubChem</a>
+    `;
+    wireImageFallbacks(panel);
+  }
+
+  function wireTopbarSearch() {
+    const input = $("#shellSearch");
+    const panel = $("#shellSearchResults");
+    if (!input || !panel) return;
+    input.addEventListener("input", () => {
+      const rawQuery = input.value.trim();
+      const term = normalise(rawQuery);
+      if (!term) {
+        panel.classList.remove("active");
+        panel.innerHTML = "";
+        return;
+      }
+
+      const localHits = localIndex()
+        .filter((item) => normalise(`${item.title} ${item.type} ${item.body}`).includes(term))
+        .slice(0, 6)
+        .map((item) => ({ ...item, external: false }));
+      const externalHits = (external.sources || []).slice(0, 4).map((source) => ({
+        type: "External",
+        title: `Search ${source.name}`,
+        body: source.bestFor,
+        href: externalUrl(source, rawQuery),
+        external: true,
+        imageUrl: placeholderImage("External", source.name, source.family)
+      }));
+      const hits = [...localHits, ...externalHits].slice(0, 8);
+      panel.classList.add("active");
+      panel.innerHTML = hits.length ? hits.map((hit) => `
+        <a class="search-hit" href="${hit.href}"${hit.external ? ' target="_blank" rel="noreferrer"' : ""}>
+          <img src="${escapeHTML(thumbnailFor(hit))}" data-fallback-src="${escapeHTML(placeholderImage(hit.type, hit.title))}" alt="" loading="lazy" />
+          <span>${escapeHTML(hit.type)}</span>
+          <strong>${escapeHTML(hit.title)}</strong>
+          <small>${escapeHTML(hit.body)}</small>
+        </a>
+      `).join("") : `<div class="empty-state">No matching academic record.</div>`;
+      wireImageFallbacks(panel);
+    });
+  }
+
+  function initSearch() {
+    const form = $("#homeSearchForm");
+    const input = $("#homeSearch");
+    if (!form || !input) return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("q")) {
+      input.value = params.get("q");
+      renderQuickLinks(input.value);
+      renderGateway(input.value);
+    } else {
+      renderQuickLinks();
+      renderGateway();
+    }
+
+    input.addEventListener("input", () => {
+      renderQuickLinks(input.value);
+      renderGateway(input.value);
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const query = input.value.trim();
+      window.location.href = query ? `pages/search.html?q=${encode(query)}` : "pages/search.html";
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initShell();
+    renderMetrics();
+    initSearch();
+    wireTopbarSearch();
+  });
+
+  function escapeHTML(value) {
+    return String(value || "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;"
+    }[char]));
+  }
+
+  function thumbnailFor(item) {
+    if (item.imageUrl) return item.imageUrl;
+    if (/reagent|compound/i.test(item.type || "") && item.title) {
+      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(item.title.replace(/^.*·\s*/, ""))}/PNG?record_type=2d&image_size=small`;
+    }
+    return placeholderImage(item.type, item.title);
+  }
+
+  function placeholderImage(type, title, subtitle = "") {
+    const palette = /material/i.test(type || "")
+      ? ["#f5f5f7", "#86868b", "#0071e3"]
+      : /external|source/i.test(type || "")
+        ? ["#f5f5f7", "#0071e3", "#86868b"]
+        : ["#f5f5f7", "#1d1d1f", "#0071e3"];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240" viewBox="0 0 360 240"><rect width="360" height="240" fill="${palette[0]}"/><path d="M44 158 104 54l60 104H44Zm180-84h84v84h-84V74Zm-96 32h132" fill="none" stroke="${palette[1]}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".34"/><circle cx="104" cy="54" r="12" fill="${palette[2]}"/><circle cx="164" cy="158" r="12" fill="${palette[2]}"/><text x="24" y="34" fill="#1d1d1f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif" font-size="17" font-weight="700">${svgEsc(type).slice(0, 24)}</text><text x="24" y="208" fill="#1d1d1f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif" font-size="22" font-weight="800">${svgEsc(title).slice(0, 24)}</text><text x="24" y="228" fill="#6e6e73" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600">${svgEsc(subtitle).slice(0, 32)}</text></svg>`;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  }
+
+  function svgEsc(value) {
+    return String(value || "").replace(/[&<>"]/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;"
+    }[char]));
+  }
+
+  function wireImageFallbacks(root) {
+    root.querySelectorAll("img[data-fallback-src]").forEach((image) => {
+      image.addEventListener("error", () => {
+        if (image.dataset.fallbackApplied) return;
+        image.dataset.fallbackApplied = "true";
+        image.src = image.dataset.fallbackSrc;
+      }, { once: true });
+    });
+  }
+})();

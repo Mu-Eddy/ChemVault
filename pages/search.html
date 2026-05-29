@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChemVault | Academic Search</title>
+  <meta name="description" content="Search ChemVault local records and continue queries in NIH, NCBI, PubChem, NIST, IUPAC and DOI-level scholarly databases." />
+  <meta name="theme-color" content="#080a0a" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/styles.css?v=20260537" />
+  <link rel="stylesheet" href="../assets/portal.css?v=20260537" />
+  <script src="../data/chem-data.js?v=20260537" defer></script>
+  <script src="../data/reagent-extension.js?v=20260537" defer></script>
+  <script src="../data/research-data.js?v=20260537" defer></script>
+  <script src="../data/dossier-data.js?v=20260537" defer></script>
+  <script src="../data/method-data.js?v=20260537" defer></script>
+  <script src="../data/spectroscopy-data.js?v=20260537" defer></script>
+  <script src="../data/materials-data.js?v=20260537" defer></script>
+  <script src="../data/database-expansion.js?v=20260537" defer></script>
+  <script src="../data/reagent-megalibrary.js?v=20260537" defer></script>
+  <script src="../data/knowledge-expansion.js?v=20260537" defer></script>
+  <script src="../data/external-sources.js?v=20260537" defer></script>
+  <script src="../scripts/record-utils.js?v=20260537" defer></script>
+  <script src="../scripts/api.js?v=20260537" defer></script>
+  <script src="../scripts/site-shell.js?v=20260537" defer></script>
+  <script src="../scripts/search-page.js?v=20260537" defer></script>
+</head>
+<body class="page-shell">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container nav-shell">
+      <a class="brand" href="../index.html"><span class="brand-mark">CV</span><span><strong>ChemVault</strong><small>academic portal</small></span></a>
+      <button class="icon-button menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      <nav class="site-nav" aria-label="Main navigation"><a href="../index.html">Home</a><a href="app.html">App</a>
+        <a href="workbench.html">Workbench</a>
+        <a href="search.html">Search</a><a href="research.html">Research</a><a href="dossiers.html">Dossiers</a><a href="methods.html">Methods</a><a href="spectroscopy.html">Spectroscopy</a><a href="materials.html">Materials</a><a href="reagents.html">Reagents</a><a href="atlas.html">Atlas</a><a href="library.html">Library</a></nav>
+      <div class="header-actions"><label class="search-shell" for="shellSearch"><span>Search</span><input id="shellSearch" type="search" placeholder="Search local records..." /></label><button class="small-button" type="button" data-shell-action="theme">Theme</button></div>
+    </div>
+    <div class="container shell-search-results" id="shellSearchResults" aria-live="polite"></div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="container page-hero-grid">
+        <div>
+          <p class="eyebrow">local-first search · academic source handoff</p>
+          <h1>Academic Search</h1>
+          <p>Query ChemVault records first. When the local database is too small, continue the same query in NIH/NLM, PubChem, PubMed Central, NIST, IUPAC and DOI metadata sources.</p>
+        </div>
+        <aside class="page-index-card">
+          <strong>Search model</strong>
+          <ol>
+            <li>Curated local match</li>
+            <li>Scope and evidence preview</li>
+            <li>External scholarly source handoff</li>
+          </ol>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section search-studio-section">
+      <div class="container search-workbench-grid">
+        <aside class="page-panel search-control-panel">
+          <form id="academicSearchForm">
+            <label for="academicSearch">Academic query</label>
+            <input id="academicSearch" type="search" placeholder="graphene oxide, DMP, hydrogel, toxicology..." autocomplete="off" />
+            <label for="searchScope">Local scope</label>
+            <select id="searchScope">
+              <option value="all">All local records</option>
+              <option value="reaction">Reaction systems</option>
+              <option value="reactant">Reactant classes</option>
+              <option value="reagent">Reagents</option>
+              <option value="compound">Compounds</option>
+              <option value="material">Materials</option>
+              <option value="route">Routes</option>
+              <option value="mechanism">Mechanisms</option>
+              <option value="concept">Concepts</option>
+              <option value="source">Sources</option>
+              <option value="research case">Research cases</option>
+              <option value="dossier">Dossiers</option>
+              <option value="method">Methods</option>
+              <option value="spectroscopy">Spectroscopy</option>
+            </select>
+            <div class="advanced-search-grid" aria-label="Advanced local filters">
+              <label for="searchFacet">Domain / family
+                <select id="searchFacet">
+                  <option value="all">All domains / families</option>
+                </select>
+              </label>
+              <label for="searchTag">Tag
+                <select id="searchTag">
+                  <option value="all">All tags</option>
+                </select>
+              </label>
+              <label for="searchSource">Record source
+                <select id="searchSource">
+                  <option value="all">Curated + session imports</option>
+                  <option value="curated">Curated local records</option>
+                  <option value="imported">Saved NIH/PubChem imports</option>
+                </select>
+              </label>
+              <label for="searchEvidence">Minimum maturity
+                <select id="searchEvidence">
+                  <option value="0">Any evidence level</option>
+                  <option value="70">70%+</option>
+                  <option value="80">80%+</option>
+                  <option value="90">90%+</option>
+                </select>
+              </label>
+              <label for="searchSort">Sort
+                <select id="searchSort">
+                  <option value="relevance">Relevance</option>
+                  <option value="evidence">Evidence maturity</option>
+                  <option value="type">Record type</option>
+                  <option value="title">Title</option>
+                </select>
+              </label>
+              <label class="inline-check" for="searchExact">
+                <input id="searchExact" type="checkbox" />
+                <span>Exact phrase</span>
+              </label>
+            </div>
+            <button class="primary-button" type="submit">Search local index</button>
+          </form>
+          <div class="search-note">
+            <span class="eyebrow">external policy</span>
+            <p>No external API key is required. ChemVault builds transparent outbound queries, so the public static site remains fast and deployable on Cloudflare Pages.</p>
+          </div>
+        </aside>
+
+        <div class="search-output-grid">
+        <section class="result-panel local-results-panel">
+          <div class="library-toolbar">
+            <span class="label">Local ChemVault results</span>
+            <strong id="searchSummary">0 local matches</strong>
+          </div>
+          <div class="local-result-grid" id="localSearchResults"></div>
+        </section>
+
+        <section class="result-panel nih-import-panel" aria-live="polite">
+          <div class="library-toolbar">
+            <span class="label">NIH / PubChem imported data</span>
+            <button class="small-button" type="button" data-import-all hidden>Save all</button>
+          </div>
+          <div class="live-enrichment-status" id="liveEnrichmentStatus">Enter an academic query to import NIH/PubChem metadata into this page.</div>
+          <div class="live-enrichment-grid" id="liveEnrichmentResults"></div>
+          <div class="imported-records-panel" id="savedExternalRecords"></div>
+        </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">academic databases</p>
+            <h2>Continue beyond ChemVault</h2>
+          </div>
+          <p>These links carry the current query to public scholarly sources. Use them when ChemVault has no record, when a record needs stronger evidence, or when you need primary literature and reference data.</p>
+        </div>
+        <div class="gateway-grid" id="externalSearchLinks"></div>
+      </div>
+    </section>
+  </main>
+  <div class="site-version">ChemVault v0.2.2</div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChemVault | Spectroscopy Evidence Workbench</title>
+  <meta name="description" content="ChemVault spectroscopy evidence workbench for IR, NMR and mass spectrometry interpretation cases, instruments and uncertainty rules." />
+  <meta name="theme-color" content="#080a0a" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="../assets/styles.css?v=20260537" />
+  <link rel="stylesheet" href="../assets/portal.css?v=20260537" />
+  <script src="../data/chem-data.js?v=20260537" defer></script>
+  <script src="../data/reagent-extension.js?v=20260537" defer></script>
+  <script src="../data/research-data.js?v=20260537" defer></script>
+  <script src="../data/dossier-data.js?v=20260537" defer></script>
+  <script src="../data/method-data.js?v=20260537" defer></script>
+  <script src="../data/spectroscopy-data.js?v=20260537" defer></script>
+  <script src="../data/materials-data.js?v=20260537" defer></script>
+  <script src="../data/database-expansion.js?v=20260537" defer></script>
+  <script src="../data/reagent-megalibrary.js?v=20260537" defer></script>
+  <script src="../data/knowledge-expansion.js?v=20260537" defer></script>
+  <script src="../data/external-sources.js?v=20260537" defer></script>
+  <script src="../scripts/record-utils.js?v=20260537" defer></script>
+  <script src="../scripts/api.js?v=20260537" defer></script>
+  <script src="../scripts/site-shell.js?v=20260537" defer></script>
+  <script src="../scripts/spectroscopy-page.js?v=20260537" defer></script>
+</head>
+<body class="page-shell">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container nav-shell">
+      <a class="brand" href="../index.html"><span class="brand-mark">CV</span><span><strong>ChemVault</strong><small>academic portal</small></span></a>
+      <button class="icon-button menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      <nav class="site-nav" aria-label="Main navigation"><a href="../index.html">Home</a><a href="app.html">App</a>
+        <a href="workbench.html">Workbench</a>
+        <a href="search.html">Search</a><a href="research.html">Research</a><a href="dossiers.html">Dossiers</a><a href="methods.html">Methods</a><a href="spectroscopy.html">Spectroscopy</a><a href="materials.html">Materials</a><a href="reagents.html">Reagents</a><a href="atlas.html">Atlas</a><a href="library.html">Library</a></nav>
+      <div class="header-actions"><label class="search-shell" for="shellSearch"><span>Search</span><input id="shellSearch" type="search" placeholder="Search local records..." /></label><button class="small-button" type="button" data-shell-action="theme">Theme</button></div>
+    </div>
+    <div class="container shell-search-results" id="shellSearchResults" aria-live="polite"></div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="container page-hero-grid">
+        <div>
+          <p class="eyebrow">dynamic page · spectral evidence reasoning</p>
+          <h1>Spectroscopy Workbench</h1>
+          <p>Use curated interpretation cases to separate observed signals, spectral inference and final structural claims. The emphasis is confidence, uncertainty and reproducible evidence.</p>
+        </div>
+        <aside class="page-index-card">
+          <strong>Spectral protocol</strong>
+          <ol>
+            <li>Record the signal</li>
+            <li>Assign the inference strength</li>
+            <li>State what evidence is missing</li>
+          </ol>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container spectroscopy-page-layout">
+        <aside class="page-panel">
+          <label for="spectroscopySearch">Search cases</label>
+          <input id="spectroscopySearch" type="search" placeholder="aldehyde, ester, bromine..." />
+          <label for="spectroscopyFamily">Evidence family</label>
+          <select id="spectroscopyFamily"></select>
+          <div class="library-toolbar"><span class="label">Cases</span><strong id="spectroscopyCount">0 cases</strong></div>
+          <div class="dense-list" id="spectroscopyList"></div>
+        </aside>
+
+        <section class="dossier-manuscript" id="spectroscopyDetail"></section>
+
+        <aside class="dossier-side">
+          <section class="page-panel">
+            <h3>Instrument Registry</h3>
+            <div class="instrument-list" id="spectroscopyInstruments"></div>
+          </section>
+          <section class="page-panel">
+            <h3>Uncertainty Rules</h3>
+            <div class="route-output" id="uncertaintyRules"></div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <div class="site-version">ChemVault v0.2.2</div>
+</body>
+</html>

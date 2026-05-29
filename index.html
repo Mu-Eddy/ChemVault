@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChemVault | Research Chemistry Portal</title>
+  <meta name="description" content="ChemVault is a public research chemistry portal with searchable reagent, materials, spectroscopy, methods and academic source records." />
+  <meta name="theme-color" content="#080a0a" />
+  <meta property="og:title" content="ChemVault | Research Chemistry Portal" />
+  <meta property="og:description" content="A concise public gateway to ChemVault's chemistry records, materials atlas and academic search tools." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="assets/styles.css?v=20260537" />
+  <link rel="stylesheet" href="assets/portal.css?v=20260537" />
+  <script src="data/chem-data.js?v=20260537" defer></script>
+  <script src="data/reagent-extension.js?v=20260537" defer></script>
+  <script src="data/research-data.js?v=20260537" defer></script>
+  <script src="data/dossier-data.js?v=20260537" defer></script>
+  <script src="data/method-data.js?v=20260537" defer></script>
+  <script src="data/spectroscopy-data.js?v=20260537" defer></script>
+  <script src="data/materials-data.js?v=20260537" defer></script>
+  <script src="data/database-expansion.js?v=20260537" defer></script>
+  <script src="data/reagent-megalibrary.js?v=20260537" defer></script>
+  <script src="data/knowledge-expansion.js?v=20260537" defer></script>
+  <script src="data/external-sources.js?v=20260537" defer></script>
+  <script src="scripts/record-utils.js?v=20260537" defer></script>
+  <script src="scripts/api.js?v=20260537" defer></script>
+  <script src="scripts/home.js?v=20260537" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav-shell">
+      <a class="brand" href="index.html" aria-label="ChemVault home">
+        <span class="brand-mark">CV</span>
+        <span>
+          <strong>ChemVault</strong>
+          <small>academic portal</small>
+        </span>
+      </a>
+
+      <button class="icon-button menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="pages/app.html">App</a>
+        <a href="pages/workbench.html">Workbench</a>
+        <a href="pages/search.html">Search</a>
+        <a href="pages/research.html">Research</a>
+        <a href="pages/dossiers.html">Dossiers</a>
+        <a href="pages/methods.html">Methods</a>
+        <a href="pages/spectroscopy.html">Spectroscopy</a>
+        <a href="pages/materials.html">Materials</a>
+        <a href="pages/reagents.html">Reagents</a>
+        <a href="pages/atlas.html">Atlas</a>
+        <a href="pages/library.html">Library</a>
+      </nav>
+
+      <div class="header-actions">
+        <label class="search-shell" for="shellSearch"><span>Search</span><input id="shellSearch" type="search" placeholder="Search local records..." /></label>
+        <button class="small-button" type="button" data-shell-action="theme">Theme</button>
+      </div>
+    </div>
+    <div class="container shell-search-results" id="shellSearchResults" aria-live="polite"></div>
+  </header>
+
+  <main id="main">
+    <section class="home-hero" id="top">
+      <div class="container home-hero-grid">
+        <div class="home-hero-copy">
+          <p class="eyebrow">public chemistry index · local records · academic source gateway</p>
+          <h1>ChemVault</h1>
+          <p class="lead">A concise gateway to research-grade chemistry records and an integrated dynamic workbench for reaction systems, reagents, materials, mechanisms, evidence review and academic source search.</p>
+          <form class="home-search-card" id="homeSearchForm">
+            <label for="homeSearch">Search local records or continue externally</label>
+            <div class="home-search-row">
+              <input id="homeSearch" type="search" placeholder="Try graphene oxide, DMP, sol-gel, PubMed topic..." autocomplete="off" />
+              <button class="primary-button" type="submit">Search</button>
+            </div>
+            <div class="home-quick-links" id="homeQuickLinks"></div>
+          </form>
+        </div>
+
+        <aside class="home-status-panel">
+          <div class="panel-toolbar">
+            <span class="status-dot"></span>
+            <span>public static build</span>
+            <code>Cloudflare-ready</code>
+          </div>
+          <div class="home-metric-grid" aria-label="ChemVault metrics">
+            <div><strong id="metricSystems">0</strong><span>reaction systems</span></div>
+            <div><strong id="metricReactants">0</strong><span>reactant classes</span></div>
+            <div><strong id="metricReagents">0</strong><span>reagents</span></div>
+            <div><strong id="metricCompounds">0</strong><span>compounds</span></div>
+            <div><strong id="metricMaterials">0</strong><span>materials</span></div>
+            <div><strong id="metricMechanisms">0</strong><span>mechanisms</span></div>
+            <div><strong id="metricSources">0</strong><span>source links</span></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section section-tint">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">site map</p>
+            <h2>Choose a workspace</h2>
+          </div>
+          <p>Home stays intentionally light. Detailed records, tools and academic materials live on dedicated pages so the public site is easier to scan and maintain.</p>
+        </div>
+        <div class="portal-grid home-portal-grid">
+          <a class="portal-card portal-card-featured" href="pages/app.html"><span>React framework layer</span><strong>Framework App</strong><p>Componentized dynamic interface reading JSON data for Research Desk, Dossier System, Reaction Matrix, Molecule Explorer and Panel UI.</p><em>Open page</em></a>
+          <a class="portal-card portal-card-featured" href="pages/workbench.html"><span>integrated research os</span><strong>Research Workbench</strong><p>Dynamic control layer connecting reaction systems, reactants, reagents, compounds, materials, mechanisms, route logic and evidence queues.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/search.html"><span>federated search</span><strong>Academic Search</strong><p>Search ChemVault first, then continue to PubMed, PubChem, PMC, NIST, IUPAC and other scholarly databases.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/reagents.html"><span>expanded database</span><strong>Reagent Records</strong><p>Organic, analytical, polymer, materials and catalysis reagents with scope, mechanism, traps and safety notes.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/materials.html"><span>materials atlas</span><strong>Materials Records</strong><p>Polymers, nanomaterials, oxides, MOFs, hydrogels, battery materials and characterization evidence.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/spectroscopy.html"><span>evidence workbench</span><strong>Spectroscopy</strong><p>IR, NMR and MS cases that separate observed signals from structural claims and missing evidence.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/methods.html"><span>reproducibility</span><strong>Methods</strong><p>Claim audit protocols, evidence grades, reproducibility ledgers and manuscript standards.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/dossiers.html"><span>research files</span><strong>Dossiers</strong><p>Project-style case files with claims, limitations, observables and reproducibility status.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/atlas.html"><span>mechanistic graph</span><strong>Mechanism Atlas</strong><p>Mechanism nodes for rate laws, stereochemistry, substrate assumptions and failure modes.</p><em>Open page</em></a>
+          <a class="portal-card" href="pages/library.html"><span>terminology</span><strong>Academic Library</strong><p>Concept definitions, source provenance and terminology records for scholarly writing.</p><em>Open page</em></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">external academic search</p>
+            <h2>When local records are not enough</h2>
+          </div>
+          <p>ChemVault can hand a query to public scholarly databases. NIH/NLM resources are included for biomedical literature, full text articles and chemical compound records.</p>
+        </div>
+        <div class="gateway-grid" id="externalGateway"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="brand footer-brand">
+        <span class="brand-mark">CV</span>
+        <span>
+          <strong>ChemVault</strong>
+          <small>public research portal</small>
+        </span>
+      </div>
+      <div class="footer-links">
+        <a href="pages/app.html">App</a>
+        <a href="pages/workbench.html">Workbench</a>
+        <a href="pages/search.html">Search</a>
+        <a href="pages/reagents.html">Reagents</a>
+        <a href="pages/materials.html">Materials</a>
+        <a href="pages/methods.html">Methods</a>
+        <a href="pages/library.html">Library</a>
+      </div>
+    </div>
+  </footer>
+  <div class="site-version">ChemVault v0.2.2</div>
+</body>
+</html>

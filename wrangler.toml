@@ -1,0 +1,11 @@
+name = "chemvault"
+compatibility_date = "2026-05-29"
+
+# Cloudflare Pages configuration. Deploy with `wrangler pages deploy .`,
+# not `wrangler deploy`, because this project uses /functions.
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chemvault"
+database_id = "285a4edc-d8d0-4ba1-8fd2-d0f10f4bccbd"
