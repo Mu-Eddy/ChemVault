@@ -8,21 +8,22 @@
   <meta name="theme-color" content="#080a0a" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="../assets/styles.css?v=20260534" />
-  <link rel="stylesheet" href="../assets/portal.css?v=20260534" />
-  <script src="../data/chem-data.js?v=20260534" defer></script>
-  <script src="../data/reagent-extension.js?v=20260534" defer></script>
-  <script src="../data/research-data.js?v=20260534" defer></script>
-  <script src="../data/dossier-data.js?v=20260534" defer></script>
-  <script src="../data/method-data.js?v=20260534" defer></script>
-  <script src="../data/spectroscopy-data.js?v=20260534" defer></script>
-  <script src="../data/materials-data.js?v=20260534" defer></script>
-  <script src="../data/database-expansion.js?v=20260534" defer></script>
-  <script src="../data/reagent-megalibrary.js?v=20260534" defer></script>
-  <script src="../data/knowledge-expansion.js?v=20260534" defer></script>
-  <script src="../data/external-sources.js?v=20260534" defer></script>
-  <script src="../scripts/site-shell.js?v=20260534" defer></script>
-  <script src="../scripts/workbench-page.js?v=20260534" defer></script>
+  <link rel="stylesheet" href="../assets/styles.css?v=20260537" />
+  <link rel="stylesheet" href="../assets/portal.css?v=20260537" />
+  <script src="../data/chem-data.js?v=20260537" defer></script>
+  <script src="../data/reagent-extension.js?v=20260537" defer></script>
+  <script src="../data/research-data.js?v=20260537" defer></script>
+  <script src="../data/dossier-data.js?v=20260537" defer></script>
+  <script src="../data/method-data.js?v=20260537" defer></script>
+  <script src="../data/spectroscopy-data.js?v=20260537" defer></script>
+  <script src="../data/materials-data.js?v=20260537" defer></script>
+  <script src="../data/database-expansion.js?v=20260537" defer></script>
+  <script src="../data/reagent-megalibrary.js?v=20260537" defer></script>
+  <script src="../data/knowledge-expansion.js?v=20260537" defer></script>
+  <script src="../data/external-sources.js?v=20260537" defer></script>
+  <script src="../scripts/record-utils.js?v=20260537" defer></script>
+  <script src="../scripts/site-shell.js?v=20260537" defer></script>
+  <script src="../scripts/workbench-page.js?v=20260537" defer></script>
 </head>
 <body class="page-shell">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -130,6 +131,15 @@
         </section>
 
         <aside class="workbench-rightbar">
+          <section class="page-panel workbench-suggester">
+            <div class="library-toolbar"><span class="label">Initial suggester</span><strong>v0.2.2</strong></div>
+            <label for="suggestStart">Starting motif or material</label>
+            <input id="suggestStart" type="search" placeholder="aryl bromide, aldehyde, graphene oxide..." autocomplete="off" />
+            <label for="suggestGoal">Research goal</label>
+            <input id="suggestGoal" type="search" placeholder="C-C coupling, selective reduction, conductivity..." autocomplete="off" />
+            <button class="primary-button" type="button" data-workbench-action="run-suggester">Build suggestions</button>
+            <div class="suggester-output" id="workbenchSuggestions" aria-live="polite"></div>
+          </section>
           <section class="page-panel">
             <div class="library-toolbar"><span class="label">Selected record</span><strong id="selectedBadge">No selection</strong></div>
             <div class="selected-record" id="selectedRecord"></div>
@@ -143,5 +153,6 @@
       </div>
     </section>
   </main>
+  <div class="site-version">ChemVault v0.2.2</div>
 </body>
 </html>

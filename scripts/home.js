@@ -40,6 +40,16 @@
   }
 
   function localIndex() {
+    const records = window.CHEMVAULT_RECORDS;
+    if (records?.buildRecords) {
+      return records.buildRecords({ includeImported: true }).map((item) => ({
+        type: item.typeLabel || item.type,
+        title: item.title,
+        body: item.body || item.subtitle || "",
+        href: item.external ? item.href : records.recordUrl(item.type, item.id),
+        external: item.external
+      }));
+    }
     const rows = [];
     (data.reagents || []).forEach((item) => rows.push({
       type: "Reagent dossier",

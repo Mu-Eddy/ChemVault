@@ -8,21 +8,22 @@
   <meta name="theme-color" content="#080a0a" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="../assets/styles.css?v=20260534" />
-  <link rel="stylesheet" href="../assets/portal.css?v=20260534" />
-  <script src="../data/chem-data.js?v=20260534" defer></script>
-  <script src="../data/reagent-extension.js?v=20260534" defer></script>
-  <script src="../data/research-data.js?v=20260534" defer></script>
-  <script src="../data/dossier-data.js?v=20260534" defer></script>
-  <script src="../data/method-data.js?v=20260534" defer></script>
-  <script src="../data/spectroscopy-data.js?v=20260534" defer></script>
-  <script src="../data/materials-data.js?v=20260534" defer></script>
-  <script src="../data/database-expansion.js?v=20260534" defer></script>
-  <script src="../data/reagent-megalibrary.js?v=20260534" defer></script>
-  <script src="../data/knowledge-expansion.js?v=20260534" defer></script>
-  <script src="../data/external-sources.js?v=20260534" defer></script>
-  <script src="../scripts/site-shell.js?v=20260534" defer></script>
-  <script src="../scripts/search-page.js?v=20260534" defer></script>
+  <link rel="stylesheet" href="../assets/styles.css?v=20260537" />
+  <link rel="stylesheet" href="../assets/portal.css?v=20260537" />
+  <script src="../data/chem-data.js?v=20260537" defer></script>
+  <script src="../data/reagent-extension.js?v=20260537" defer></script>
+  <script src="../data/research-data.js?v=20260537" defer></script>
+  <script src="../data/dossier-data.js?v=20260537" defer></script>
+  <script src="../data/method-data.js?v=20260537" defer></script>
+  <script src="../data/spectroscopy-data.js?v=20260537" defer></script>
+  <script src="../data/materials-data.js?v=20260537" defer></script>
+  <script src="../data/database-expansion.js?v=20260537" defer></script>
+  <script src="../data/reagent-megalibrary.js?v=20260537" defer></script>
+  <script src="../data/knowledge-expansion.js?v=20260537" defer></script>
+  <script src="../data/external-sources.js?v=20260537" defer></script>
+  <script src="../scripts/record-utils.js?v=20260537" defer></script>
+  <script src="../scripts/site-shell.js?v=20260537" defer></script>
+  <script src="../scripts/search-page.js?v=20260537" defer></script>
 </head>
 <body class="page-shell">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -80,6 +81,45 @@
               <option value="method">Methods</option>
               <option value="spectroscopy">Spectroscopy</option>
             </select>
+            <div class="advanced-search-grid" aria-label="Advanced local filters">
+              <label for="searchFacet">Domain / family
+                <select id="searchFacet">
+                  <option value="all">All domains / families</option>
+                </select>
+              </label>
+              <label for="searchTag">Tag
+                <select id="searchTag">
+                  <option value="all">All tags</option>
+                </select>
+              </label>
+              <label for="searchSource">Record source
+                <select id="searchSource">
+                  <option value="all">Curated + session imports</option>
+                  <option value="curated">Curated local records</option>
+                  <option value="imported">Saved NIH/PubChem imports</option>
+                </select>
+              </label>
+              <label for="searchEvidence">Minimum maturity
+                <select id="searchEvidence">
+                  <option value="0">Any evidence level</option>
+                  <option value="70">70%+</option>
+                  <option value="80">80%+</option>
+                  <option value="90">90%+</option>
+                </select>
+              </label>
+              <label for="searchSort">Sort
+                <select id="searchSort">
+                  <option value="relevance">Relevance</option>
+                  <option value="evidence">Evidence maturity</option>
+                  <option value="type">Record type</option>
+                  <option value="title">Title</option>
+                </select>
+              </label>
+              <label class="inline-check" for="searchExact">
+                <input id="searchExact" type="checkbox" />
+                <span>Exact phrase</span>
+              </label>
+            </div>
             <button class="primary-button" type="submit">Search local index</button>
           </form>
           <div class="search-note">
@@ -123,5 +163,6 @@
       </div>
     </section>
   </main>
+  <div class="site-version">ChemVault v0.2.2</div>
 </body>
 </html>

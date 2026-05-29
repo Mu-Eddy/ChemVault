@@ -25,7 +25,7 @@ for (const file of files) {
 }
 
 const payload = {
-  version: "20260534",
+  version: "0.2.2",
   generatedAt: new Date().toISOString(),
   chem: context.window.CHEMVAULT_DATA || {},
   research: context.window.CHEMVAULT_RESEARCH || {},

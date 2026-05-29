@@ -4,6 +4,7 @@
   <url><loc>https://chemvault.pages.dev/pages/app.html</loc><priority>1.0</priority></url>
   <url><loc>https://chemvault.pages.dev/pages/workbench.html</loc><priority>1.0</priority></url>
   <url><loc>https://chemvault.pages.dev/pages/search.html</loc><priority>0.9</priority></url>
+  <url><loc>https://chemvault.pages.dev/pages/record.html</loc><priority>0.9</priority></url>
   <url><loc>https://chemvault.pages.dev/pages/research.html</loc><priority>0.9</priority></url>
   <url><loc>https://chemvault.pages.dev/pages/dossiers.html</loc><priority>0.9</priority></url>
   <url><loc>https://chemvault.pages.dev/pages/methods.html</loc><priority>0.9</priority></url>

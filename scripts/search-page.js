@@ -20,6 +20,8 @@
   }[char]));
   const encode = (value) => encodeURIComponent((value || "").trim());
   const normalise = (value) => String(value || "").toLowerCase();
+  const compact = (value) => normalise(value).replace(/[^a-z0-9.+-]/g, " ").replace(/\s+/g, " ").trim();
+  const recordApi = () => window.CHEMVAULT_RECORDS;
 
   function externalUrl(source, query) {
     const encoded = encode(query);
@@ -28,6 +30,25 @@
   }
 
   function buildIndex() {
+    const api = recordApi();
+    if (api?.buildRecords) {
+      return api.buildRecords({ includeImported: true }).map((record) => ({
+        id: record.id,
+        recordType: record.type,
+        type: record.typeLabel || record.type,
+        title: record.title,
+        body: record.body || record.subtitle || "",
+        tags: record.tags || [],
+        href: record.external ? record.href : api.recordUrl(record.type, record.id),
+        external: record.external,
+        domain: record.domain || "",
+        family: record.family || "",
+        risk: record.risk || "",
+        maturity: Number(record.maturity || 0),
+        sourceKind: record.external ? "imported" : "curated",
+        searchText: record.searchText || compact(`${record.title} ${record.body} ${(record.tags || []).join(" ")}`)
+      }));
+    }
     const rows = [];
     getImportedRecords().forEach((item) => rows.push(item));
     (data.reactionSystems || []).forEach((item) => rows.push({
@@ -125,14 +146,22 @@
   }
 
   function score(item, query) {
-    const q = normalise(query);
-    const haystack = normalise(`${item.title} ${item.type} ${item.body} ${(item.tags || []).join(" ")}`);
+    const q = compact(query);
+    const haystack = item.searchText || compact(`${item.title} ${item.type} ${item.body} ${(item.tags || []).join(" ")}`);
     if (!q) return 1;
     if (!haystack.includes(q)) return 0;
     let value = 10;
-    if (normalise(item.title).includes(q)) value += 12;
-    if (normalise(item.type).includes(q)) value += 5;
+    if (compact(item.title).includes(q)) value += 12;
+    if (compact(item.type).includes(q)) value += 5;
     return value;
+  }
+
+  function tokenScore(item, query) {
+    const tokens = compact(query).split(" ").filter((token) => token.length > 2);
+    if (!tokens.length) return 1;
+    const haystack = item.searchText || compact(`${item.title} ${item.type} ${item.body} ${(item.tags || []).join(" ")}`);
+    const matches = tokens.filter((token) => haystack.includes(token)).length;
+    return matches ? matches + score(item, query) : 0;
   }
 
   function renderExternal(query) {
@@ -147,22 +176,73 @@
     `).join("");
   }
 
-  function renderLocal(query, scope = "all") {
+  function readAdvancedFilters() {
+    return {
+      facet: $("#searchFacet")?.value || "all",
+      tag: $("#searchTag")?.value || "all",
+      source: $("#searchSource")?.value || "all",
+      minMaturity: Number($("#searchEvidence")?.value || 0),
+      sort: $("#searchSort")?.value || "relevance",
+      exact: Boolean($("#searchExact")?.checked)
+    };
+  }
+
+  function renderAdvancedOptions(index) {
+    const facet = $("#searchFacet");
+    const tag = $("#searchTag");
+    if (!facet || !tag) return;
+    const selectedFacet = facet.value || "all";
+    const selectedTag = tag.value || "all";
+    const facets = unique(index.flatMap((item) => [item.domain, item.family, item.risk]).filter(Boolean))
+      .sort((a, b) => a.localeCompare(b));
+    const tags = unique(index.flatMap((item) => item.tags || []).filter(Boolean))
+      .sort((a, b) => a.localeCompare(b))
+      .slice(0, 160);
+    facet.innerHTML = `<option value="all">All domains / families</option>${facets.map((item) => `<option value="${esc(item)}">${esc(item)}</option>`).join("")}`;
+    tag.innerHTML = `<option value="all">All tags</option>${tags.map((item) => `<option value="${esc(item)}">${esc(item)}</option>`).join("")}`;
+    facet.value = facets.includes(selectedFacet) ? selectedFacet : "all";
+    tag.value = tags.includes(selectedTag) ? selectedTag : "all";
+  }
+
+  function passesAdvanced(item, filters, query) {
+    if (filters.source !== "all" && item.sourceKind !== filters.source) return false;
+    if (filters.facet !== "all") {
+      const facet = compact(filters.facet);
+      const values = [item.domain, item.family, item.risk, item.type, ...(item.tags || [])].map(compact);
+      if (!values.includes(facet)) return false;
+    }
+    if (filters.tag !== "all" && !(item.tags || []).map(compact).includes(compact(filters.tag))) return false;
+    if (filters.minMaturity && Number(item.maturity || 0) < filters.minMaturity) return false;
+    if (filters.exact && query && !(item.searchText || "").includes(compact(query))) return false;
+    return true;
+  }
+
+  function sortRows(rows, sort) {
+    if (sort === "title") return rows.sort((a, b) => a.item.title.localeCompare(b.item.title));
+    if (sort === "type") return rows.sort((a, b) => a.item.type.localeCompare(b.item.type) || a.item.title.localeCompare(b.item.title));
+    if (sort === "evidence") return rows.sort((a, b) => Number(b.item.maturity || 0) - Number(a.item.maturity || 0) || b.score - a.score);
+    return rows.sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title));
+  }
+
+  function renderLocal(query, scope = "all", filters = readAdvancedFilters()) {
     const panel = $("#localSearchResults");
     const summary = $("#searchSummary");
     if (!panel) return;
     const index = buildIndex();
-    const rows = index
-      .filter((item) => scope === "all" || item.type.toLowerCase() === scope)
-      .map((item) => ({ item, score: score(item, query) }))
+    renderAdvancedOptions(index);
+    const rows = sortRows(index
+      .filter((item) => scope === "all" || item.recordType === scope || item.type.toLowerCase() === scope || item.type.toLowerCase().includes(scope))
+      .filter((item) => passesAdvanced(item, filters, query))
+      .map((item) => ({ item, score: filters.exact ? score(item, query) : tokenScore(item, query) }))
       .filter((row) => query ? row.score > 0 : row.score > 0)
-      .sort((a, b) => b.score - a.score)
+    , filters.sort)
       .slice(0, 24)
       .map((row) => row.item);
 
     if (summary) {
       const countText = rows.length === 1 ? "1 local match" : `${rows.length} local matches`;
-      summary.textContent = query ? `${countText} for "${query}"` : `${countText} across the local knowledge base`;
+      const filterText = [scope !== "all" ? scope : "", filters.facet !== "all" ? filters.facet : "", filters.tag !== "all" ? filters.tag : ""].filter(Boolean).join(" · ");
+      summary.textContent = `${query ? `${countText} for "${query}"` : `${countText} across the local knowledge base`}${filterText ? ` · ${filterText}` : ""}`;
     }
 
     if (!rows.length) {
@@ -181,6 +261,7 @@
         <span class="eyebrow">${esc(item.type)}</span>
         <strong>${esc(item.title)}</strong>
         <span>${esc(item.body).slice(0, 260)}${item.body.length > 260 ? "..." : ""}</span>
+        <small>${[item.domain || item.family, item.maturity ? `${item.maturity}% maturity` : "", (item.tags || []).slice(0, 3).join(", ")].filter(Boolean).map(esc).join(" · ")}</small>
       </a>
     `).join("");
     return rows.length;
@@ -190,7 +271,8 @@
     const input = $("#academicSearch");
     const scope = $("#searchScope");
     const query = input ? input.value.trim() : "";
-    const localCount = renderLocal(query, scope ? scope.value : "all");
+    const filters = readAdvancedFilters();
+    const localCount = renderLocal(query, scope ? scope.value : "all", filters);
     renderExternal(query);
     runLiveEnrichment(query, localCount);
     const url = new URL(window.location.href);
@@ -198,6 +280,18 @@
     else url.searchParams.delete("q");
     if (scope && scope.value !== "all") url.searchParams.set("scope", scope.value);
     else url.searchParams.delete("scope");
+    if (filters.facet !== "all") url.searchParams.set("facet", filters.facet);
+    else url.searchParams.delete("facet");
+    if (filters.tag !== "all") url.searchParams.set("tag", filters.tag);
+    else url.searchParams.delete("tag");
+    if (filters.source !== "all") url.searchParams.set("source", filters.source);
+    else url.searchParams.delete("source");
+    if (filters.minMaturity) url.searchParams.set("maturity", String(filters.minMaturity));
+    else url.searchParams.delete("maturity");
+    if (filters.sort !== "relevance") url.searchParams.set("sort", filters.sort);
+    else url.searchParams.delete("sort");
+    if (filters.exact) url.searchParams.set("exact", "1");
+    else url.searchParams.delete("exact");
     window.history.replaceState({}, "", url);
   }
 
@@ -550,6 +644,10 @@
     `;
   }
 
+  function unique(values) {
+    return [...new Set((values || []).filter(Boolean).map(String))];
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     const form = $("#academicSearchForm");
     const input = $("#academicSearch");
@@ -557,6 +655,13 @@
     const params = new URLSearchParams(window.location.search);
     if (input) input.value = params.get("q") || "";
     if (scope && params.get("scope")) scope.value = params.get("scope");
+    renderAdvancedOptions(buildIndex());
+    if ($("#searchFacet") && params.get("facet")) $("#searchFacet").value = params.get("facet");
+    if ($("#searchTag") && params.get("tag")) $("#searchTag").value = params.get("tag");
+    if ($("#searchSource") && params.get("source")) $("#searchSource").value = params.get("source");
+    if ($("#searchEvidence") && params.get("maturity")) $("#searchEvidence").value = params.get("maturity");
+    if ($("#searchSort") && params.get("sort")) $("#searchSort").value = params.get("sort");
+    if ($("#searchExact")) $("#searchExact").checked = params.get("exact") === "1";
 
     if (form) {
       form.addEventListener("submit", (event) => {
@@ -565,6 +670,9 @@
       });
     }
     if (scope) scope.addEventListener("change", runSearch);
+    ["#searchFacet", "#searchTag", "#searchSource", "#searchEvidence", "#searchSort", "#searchExact"].forEach((selector) => {
+      $(selector)?.addEventListener("change", runSearch);
+    });
     document.addEventListener("click", (event) => {
       const importAll = event.target.closest("[data-import-all]");
       if (importAll) {

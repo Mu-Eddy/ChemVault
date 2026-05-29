@@ -9,7 +9,9 @@
     domain: "all",
     evidence: 80,
     selected: null,
-    activeTab: "systems"
+    activeTab: "systems",
+    suggestStart: "",
+    suggestGoal: ""
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -38,6 +40,8 @@
     state.domain = params.get("domain") || "all";
     state.selected = params.get("id");
     state.activeTab = params.get("tab") || "systems";
+    state.suggestStart = params.get("start") || "";
+    state.suggestGoal = params.get("goal") || "";
     const evidence = Number(params.get("maturity"));
     if (Number.isFinite(evidence) && evidence >= 70 && evidence <= 95) state.evidence = evidence;
   }
@@ -47,6 +51,8 @@
     const evidenceInput = $("#workbenchEvidence");
     if (queryInput) queryInput.value = state.query;
     if (evidenceInput) evidenceInput.value = state.evidence;
+    if ($("#suggestStart")) $("#suggestStart").value = state.suggestStart;
+    if ($("#suggestGoal")) $("#suggestGoal").value = state.suggestGoal;
 
     const domains = unique((data.reactionSystems || []).map((item) => item.domain)).sort();
     $("#workbenchDomain").innerHTML = `<option value="all">All research domains</option>${domains.map((domain) => `<option value="${esc(domain)}">${esc(domain)}</option>`).join("")}`;
@@ -75,6 +81,16 @@
     $("#workbenchEvidence")?.addEventListener("input", (event) => {
       state.evidence = Number(event.target.value);
       renderAll();
+    });
+    $("#suggestStart")?.addEventListener("input", (event) => {
+      state.suggestStart = event.target.value;
+      renderSuggestions(selectedSystem());
+      syncUrl();
+    });
+    $("#suggestGoal")?.addEventListener("input", (event) => {
+      state.suggestGoal = event.target.value;
+      renderSuggestions(selectedSystem());
+      syncUrl();
     });
     $$("#lensGrid [data-query]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -105,6 +121,10 @@
           state.query = "oxidative addition hydride pericyclic polymer mechanism";
           state.activeTab = "mechanisms";
         }
+        if (action === "run-suggester") {
+          state.query = [state.suggestStart, state.suggestGoal].filter(Boolean).join(" ");
+          state.activeTab = "routes";
+        }
         $("#workbenchQuery").value = state.query;
         setActiveTab(state.activeTab, false);
         state.selected = null;
@@ -126,6 +146,7 @@
     renderPanels(selected);
     renderSelectedRecord(selected);
     renderExternalLinks(selected);
+    renderSuggestions(selected);
     syncUrl();
   }
 
@@ -304,7 +325,7 @@
             <h3>${esc(route.start)} to ${esc(route.target)}</h3>
             <ol>${(route.route || []).map((step) => `<li>${esc(step)}</li>`).join("")}</ol>
             <p>${esc(route.note)}</p>
-            <a class="secondary-button" href="library.html?q=${encode(`${route.start} ${route.target}`)}">Open route context</a>
+            <a class="secondary-button" href="${recordUrl("route", routeId(route))}">Open route record</a>
           </article>
         `).join("") : `<div class="empty-state">No route matched this system. Broaden the query to inspect the full route index.</div>`}
       </div>
@@ -329,7 +350,7 @@
               <div class="micro-row"><span>Rate law</span><strong>${esc(item.rateLaw)}</strong></div>
               <div class="micro-row"><span>Stereochemistry</span><strong>${esc(item.stereo)}</strong></div>
             </div>
-            <a class="secondary-button" href="atlas.html?id=${encode(item.id)}">Open atlas node</a>
+            <a class="secondary-button" href="${recordUrl("mechanism", item.id)}">Open mechanism record</a>
           </article>
         `).join("") : `<div class="empty-state">No mechanism node matched the current filter.</div>`}
       </div>
@@ -361,7 +382,7 @@
             <h3>${esc(item.name)}</h3>
             <p>${esc(item.synthesis)}</p>
             <div class="tag-row">${(item.characterization || []).slice(0, 4).map((tag) => `<span class="tag">${esc(tag)}</span>`).join("")}</div>
-            <a class="secondary-button" href="materials.html?id=${encode(item.id)}">Open material profile</a>
+            <a class="secondary-button" href="${recordUrl("material", item.id)}">Open material record</a>
           </article>
         `).join("") : `<div class="empty-state">No material profile matched this system.</div>`}
       </div>
@@ -422,6 +443,78 @@
     `).join("");
   }
 
+  function renderSuggestions(system) {
+    const panel = $("#workbenchSuggestions");
+    if (!panel) return;
+    const queryText = [
+      state.suggestStart,
+      state.suggestGoal,
+      state.query,
+      system?.name,
+      system?.className,
+      system?.domain
+    ].filter(Boolean).join(" ");
+    if (!queryText.trim()) {
+      panel.innerHTML = `<div class="empty-state">Enter a starting motif and goal to generate first-pass reaction, reagent, route and evidence suggestions.</div>`;
+      return;
+    }
+    const systems = (data.reactionSystems || [])
+      .map((item) => ({ item, score: systemScore(item, queryText) }))
+      .filter((row) => row.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((row) => row.item);
+    const reagents = (data.reagents || [])
+      .map((item) => ({ item, score: reagentScore(item, queryText) }))
+      .filter((row) => row.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map((row) => row.item);
+    const routes = (data.routes || [])
+      .map((route) => ({ route, score: routeScore(route, queryText) }))
+      .filter((row) => row.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((row) => row.route);
+    const mechanisms = (data.mechanisms || [])
+      .map((item) => ({ item, score: mechanismScore(item, queryText) }))
+      .filter((row) => row.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((row) => row.item);
+
+    panel.innerHTML = `
+      ${suggestionBlock("Systems", systems, (item) => `
+        <a href="${recordUrl("reaction", item.id)}"><strong>${esc(item.name)}</strong><small>${esc(item.domain)} · ${Number(item.maturity || 0)}% maturity</small></a>
+      `)}
+      ${suggestionBlock("Reagents", reagents, (item) => `
+        <a href="${recordUrl("reagent", item.id)}"><strong>${esc(item.formula)} · ${esc(item.name)}</strong><small>${esc(item.focus || item.category)}</small></a>
+      `)}
+      ${suggestionBlock("Routes", routes, (item) => `
+        <a href="${recordUrl("route", routeId(item))}"><strong>${esc(item.start)} to ${esc(item.target)}</strong><small>${esc((item.route || []).join(" -> "))}</small></a>
+      `)}
+      ${suggestionBlock("Mechanisms", mechanisms, (item) => `
+        <a href="${recordUrl("mechanism", item.id)}"><strong>${esc(item.name)}</strong><small>${esc(item.className)}</small></a>
+      `)}
+      <button class="secondary-button" type="button" data-suggest-apply="${esc(queryText)}">Apply phrase to Workbench</button>
+    `;
+    panel.querySelector("[data-suggest-apply]")?.addEventListener("click", (event) => {
+      state.query = event.currentTarget.dataset.suggestApply || "";
+      $("#workbenchQuery").value = state.query;
+      state.selected = null;
+      renderAll();
+    });
+  }
+
+  function suggestionBlock(title, items, renderer) {
+    return `
+      <section class="suggestion-block">
+        <h3>${esc(title)}</h3>
+        <div>${items.length ? items.map(renderer).join("") : `<span class="muted">No initial match.</span>`}</div>
+      </section>
+    `;
+  }
+
   function setActiveTab(tab, update = true) {
     const valid = ["systems", "routes", "mechanisms", "materials", "evidence"];
     state.activeTab = valid.includes(tab) ? tab : "systems";
@@ -448,6 +541,10 @@
     else url.searchParams.delete("tab");
     if (state.evidence !== 80) url.searchParams.set("maturity", String(state.evidence));
     else url.searchParams.delete("maturity");
+    if (state.suggestStart) url.searchParams.set("start", state.suggestStart);
+    else url.searchParams.delete("start");
+    if (state.suggestGoal) url.searchParams.set("goal", state.suggestGoal);
+    else url.searchParams.delete("goal");
     history.replaceState(null, "", url);
   }
 
@@ -485,6 +582,52 @@
     return score;
   }
 
+  function systemScore(system, queryText) {
+    const text = normalise([
+      system.name,
+      system.className,
+      system.domain,
+      ...(system.substrates || []).map((id) => reactantName(id)),
+      ...(system.reagents || []).map((id) => reagentName(id)),
+      ...(system.mechanisms || []).map((id) => mechanismName(id)),
+      ...(system.conditions || []),
+      ...(system.readouts || []),
+      ...(system.limitations || [])
+    ].join(" "));
+    return scoreText(text, queryText) + Number(system.maturity || 0) / 100;
+  }
+
+  function reagentScore(item, queryText) {
+    return scoreText(normalise([
+      item.name,
+      item.formula,
+      item.category,
+      item.focus,
+      item.scope,
+      item.mechanism,
+      ...(item.tags || []),
+      ...(item.transformations || []),
+      ...(item.conditions || [])
+    ].join(" ")), queryText);
+  }
+
+  function mechanismScore(item, queryText) {
+    return scoreText(normalise([
+      item.name,
+      item.className,
+      item.summary,
+      item.rateLaw,
+      item.stereo,
+      ...(item.tags || []),
+      ...(item.bestFor || []),
+      ...(item.steps || [])
+    ].join(" ")), queryText);
+  }
+
+  function scoreText(text, queryText) {
+    return queryTokens(queryText).reduce((total, token) => total + (text.includes(token) ? 1 : 0), 0);
+  }
+
   function listBlock(title, items) {
     return `
       <section class="data-window">
@@ -495,12 +638,12 @@
   }
 
   function reactantLink(id) {
-    return `<a href="search.html?q=${encode(reactantName(id))}">${esc(reactantName(id))}</a>`;
+    return `<a href="${recordUrl("reactant", id)}">${esc(reactantName(id))}</a>`;
   }
 
   function reagentLink(id) {
     const reagent = (data.reagents || []).find((item) => item.id === id);
-    if (reagent) return `<a href="reagents.html?id=${encode(reagent.id)}">${esc(reagent.formula)} · ${esc(reagent.name)}</a>`;
+    if (reagent) return `<a href="${recordUrl("reagent", reagent.id)}">${esc(reagent.formula)} · ${esc(reagent.name)}</a>`;
     return `<a href="search.html?q=${encode(reagentName(id))}">${esc(reagentName(id))}</a>`;
   }
 
@@ -521,6 +664,14 @@
     return encoded && source.queryUrl ? source.queryUrl.replace("{query}", encoded) : source.baseUrl;
   }
 
+  function recordUrl(type, id) {
+    return window.CHEMVAULT_RECORDS?.recordUrl(type, id) || `record.html?type=${encode(type)}&id=${encode(id)}`;
+  }
+
+  function routeId(route) {
+    return window.CHEMVAULT_RECORDS?.routeId(route) || `route-${idToSlug(route?.start)}-${idToSlug(route?.target)}`;
+  }
+
   function matchesQuery(normalisedText, rawQuery) {
     const tokens = queryTokens(rawQuery);
     if (!tokens.length) return true;
@@ -537,6 +688,10 @@
 
   function idToTitle(id) {
     return String(id || "").split("-").filter(Boolean).map((word) => word[0]?.toUpperCase() + word.slice(1)).join(" ");
+  }
+
+  function idToSlug(value) {
+    return String(value || "record").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
   function unique(values) {

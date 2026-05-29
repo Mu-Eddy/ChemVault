@@ -116,7 +116,7 @@
 
 .framework-main-grid {
   width: min(1540px, 100%);
-  grid-template-columns: 230px minmax(0, 1fr) 270px;
+  grid-template-columns: 220px minmax(0, 1fr);
   align-items: start;
 }
 
@@ -125,8 +125,15 @@
   display: grid;
   gap: 10px;
   padding: 13px;
+}
+
+.framework-nav-panel {
   position: sticky;
-  top: 116px;
+  top: 78px;
+}
+
+.framework-inspector-panel {
+  grid-column: 1 / -1;
 }
 
 .framework-nav-panel button {
@@ -156,7 +163,7 @@
 }
 
 .react-view-grid {
-  grid-template-columns: 300px minmax(0, 1fr) 260px;
+  grid-template-columns: 280px minmax(0, 1fr) 220px;
   align-items: start;
 }
 
@@ -406,6 +413,22 @@
   font-weight: 900;
 }
 
+@media (min-width: 1500px) {
+  .framework-main-grid {
+    grid-template-columns: 230px minmax(0, 1fr) 270px;
+  }
+
+  .framework-inspector-panel {
+    grid-column: auto;
+    position: sticky;
+    top: 78px;
+  }
+
+  .react-view-grid {
+    grid-template-columns: 300px minmax(0, 1fr) 260px;
+  }
+}
+
 @media (max-width: 1200px) {
   .framework-main-grid,
   .react-view-grid {
@@ -415,6 +438,10 @@
   .framework-nav-panel,
   .framework-inspector-panel {
     position: static;
+  }
+
+  .framework-inspector-panel {
+    grid-column: auto;
   }
 }
 
