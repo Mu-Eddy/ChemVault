@@ -76,11 +76,16 @@ npm run deploy
 In the Cloudflare dashboard, use these settings:
 
 - Project type: Pages, not Workers.
+- Production branch: `main`.
 - Framework preset: None.
 - Build command: leave blank.
 - Build output directory: `.`
 
 Do not use `wrangler deploy` for this repo. That command deploys a Worker and expects Workers Static Assets configuration such as `[assets] directory = "./dist"`, which does not apply to Pages Functions.
+
+If the live site still shows the older dark/cyberpunk theme, check that Cloudflare is not deploying the `cloudflare/workers-autoconfig` branch. That branch was generated for Workers configuration; the Pages + D1 site is on `main`.
+
+Search result images are covered by `_headers`. PubChem structure images need `img-src` access to `pubchem.ncbi.nlm.nih.gov`; without that CSP rule, records such as `methanol` can have valid database `image_url` values but still show blank thumbnails in the browser.
 
 ## Files Added For The Backend
 
