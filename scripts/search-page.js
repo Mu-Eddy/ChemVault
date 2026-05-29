@@ -30,6 +30,20 @@
   function buildIndex() {
     const rows = [];
     getImportedRecords().forEach((item) => rows.push(item));
+    (data.reactionSystems || []).forEach((item) => rows.push({
+      type: "Reaction",
+      title: item.name,
+      body: [item.className, item.domain, (item.conditions || []).join(", "), (item.readouts || []).join(", "), (item.limitations || []).join(", ")].filter(Boolean).join(" | "),
+      tags: [item.domain, ...(item.substrates || []), ...(item.reagents || []), ...(item.mechanisms || [])].filter(Boolean),
+      href: `workbench.html?id=${item.id}`
+    }));
+    (data.reactants || []).forEach((item) => rows.push({
+      type: "Reactant",
+      title: item.name,
+      body: [item.className, (item.functionalGroups || []).join(", "), (item.compatibleMethods || []).join(", "), (item.constraints || []).join(", ")].filter(Boolean).join(" | "),
+      tags: item.functionalGroups || [],
+      href: `workbench.html?q=${encode(item.name)}`
+    }));
     (data.reagents || []).forEach((item) => rows.push({
       type: "Reagent",
       title: item.name,

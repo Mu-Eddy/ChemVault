@@ -1,4 +1,6 @@
 /home /index.html 301
+/app /pages/app.html 301
+/workbench /pages/workbench.html 301
 /search /pages/search.html 301
 /research /pages/research.html 301
 /dossiers /pages/dossiers.html 301

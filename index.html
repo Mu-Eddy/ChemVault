@@ -11,19 +11,20 @@
   <meta property="og:type" content="website" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="assets/styles.css?v=20260532" />
-  <link rel="stylesheet" href="assets/portal.css?v=20260532" />
-  <script src="data/chem-data.js?v=20260532" defer></script>
-  <script src="data/reagent-extension.js?v=20260532" defer></script>
-  <script src="data/research-data.js?v=20260532" defer></script>
-  <script src="data/dossier-data.js?v=20260532" defer></script>
-  <script src="data/method-data.js?v=20260532" defer></script>
-  <script src="data/spectroscopy-data.js?v=20260532" defer></script>
-  <script src="data/materials-data.js?v=20260532" defer></script>
-  <script src="data/database-expansion.js?v=20260532" defer></script>
-  <script src="data/reagent-megalibrary.js?v=20260532" defer></script>
-  <script src="data/external-sources.js?v=20260532" defer></script>
-  <script src="scripts/home.js?v=20260532" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=20260534" />
+  <link rel="stylesheet" href="assets/portal.css?v=20260534" />
+  <script src="data/chem-data.js?v=20260534" defer></script>
+  <script src="data/reagent-extension.js?v=20260534" defer></script>
+  <script src="data/research-data.js?v=20260534" defer></script>
+  <script src="data/dossier-data.js?v=20260534" defer></script>
+  <script src="data/method-data.js?v=20260534" defer></script>
+  <script src="data/spectroscopy-data.js?v=20260534" defer></script>
+  <script src="data/materials-data.js?v=20260534" defer></script>
+  <script src="data/database-expansion.js?v=20260534" defer></script>
+  <script src="data/reagent-megalibrary.js?v=20260534" defer></script>
+  <script src="data/knowledge-expansion.js?v=20260534" defer></script>
+  <script src="data/external-sources.js?v=20260534" defer></script>
+  <script src="scripts/home.js?v=20260534" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -44,6 +45,8 @@
 
       <nav class="site-nav" aria-label="Main navigation">
         <a href="index.html">Home</a>
+        <a href="pages/app.html">App</a>
+        <a href="pages/workbench.html">Workbench</a>
         <a href="pages/search.html">Search</a>
         <a href="pages/research.html">Research</a>
         <a href="pages/dossiers.html">Dossiers</a>
@@ -69,7 +72,7 @@
         <div class="home-hero-copy">
           <p class="eyebrow">public chemistry index · local records · academic source gateway</p>
           <h1>ChemVault</h1>
-          <p class="lead">A concise gateway to research-grade chemistry records: reagents, materials, methods, spectroscopy evidence, mechanism reasoning and academic source search.</p>
+          <p class="lead">A concise gateway to research-grade chemistry records and an integrated dynamic workbench for reaction systems, reagents, materials, mechanisms, evidence review and academic source search.</p>
           <form class="home-search-card" id="homeSearchForm">
             <label for="homeSearch">Search local records or continue externally</label>
             <div class="home-search-row">
@@ -87,6 +90,8 @@
             <code>Cloudflare-ready</code>
           </div>
           <div class="home-metric-grid" aria-label="ChemVault metrics">
+            <div><strong id="metricSystems">0</strong><span>reaction systems</span></div>
+            <div><strong id="metricReactants">0</strong><span>reactant classes</span></div>
             <div><strong id="metricReagents">0</strong><span>reagents</span></div>
             <div><strong id="metricCompounds">0</strong><span>compounds</span></div>
             <div><strong id="metricMaterials">0</strong><span>materials</span></div>
@@ -107,6 +112,8 @@
           <p>Home stays intentionally light. Detailed records, tools and academic materials live on dedicated pages so the public site is easier to scan and maintain.</p>
         </div>
         <div class="portal-grid home-portal-grid">
+          <a class="portal-card portal-card-featured" href="pages/app.html"><span>React framework layer</span><strong>Framework App</strong><p>Componentized dynamic interface reading JSON data for Research Desk, Dossier System, Reaction Matrix, Molecule Explorer and Panel UI.</p><em>Open page</em></a>
+          <a class="portal-card portal-card-featured" href="pages/workbench.html"><span>integrated research os</span><strong>Research Workbench</strong><p>Dynamic control layer connecting reaction systems, reactants, reagents, compounds, materials, mechanisms, route logic and evidence queues.</p><em>Open page</em></a>
           <a class="portal-card" href="pages/search.html"><span>federated search</span><strong>Academic Search</strong><p>Search ChemVault first, then continue to PubMed, PubChem, PMC, NIST, IUPAC and other scholarly databases.</p><em>Open page</em></a>
           <a class="portal-card" href="pages/reagents.html"><span>expanded database</span><strong>Reagent Records</strong><p>Organic, analytical, polymer, materials and catalysis reagents with scope, mechanism, traps and safety notes.</p><em>Open page</em></a>
           <a class="portal-card" href="pages/materials.html"><span>materials atlas</span><strong>Materials Records</strong><p>Polymers, nanomaterials, oxides, MOFs, hydrogels, battery materials and characterization evidence.</p><em>Open page</em></a>
@@ -143,6 +150,8 @@
         </span>
       </div>
       <div class="footer-links">
+        <a href="pages/app.html">App</a>
+        <a href="pages/workbench.html">Workbench</a>
         <a href="pages/search.html">Search</a>
         <a href="pages/reagents.html">Reagents</a>
         <a href="pages/materials.html">Materials</a>

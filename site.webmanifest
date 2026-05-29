@@ -1,7 +1,7 @@
 {
   "name": "ChemVault",
   "short_name": "ChemVault",
-  "description": "A research-grade public chemistry workspace for evidence-backed learning, methods, spectroscopy, reagents and mechanism reasoning.",
+  "description": "A research-grade public chemistry workspace for reaction systems, reagents, materials, mechanisms, evidence-backed methods and scholarly source handoff.",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#080a0a",

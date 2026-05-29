@@ -8,20 +8,21 @@
   <meta name="theme-color" content="#080a0a" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="../assets/styles.css?v=20260532" />
-  <link rel="stylesheet" href="../assets/portal.css?v=20260532" />
-  <script src="../data/chem-data.js?v=20260532" defer></script>
-  <script src="../data/reagent-extension.js?v=20260532" defer></script>
-  <script src="../data/research-data.js?v=20260532" defer></script>
-  <script src="../data/dossier-data.js?v=20260532" defer></script>
-  <script src="../data/method-data.js?v=20260532" defer></script>
-  <script src="../data/spectroscopy-data.js?v=20260532" defer></script>
-  <script src="../data/materials-data.js?v=20260532" defer></script>
-  <script src="../data/database-expansion.js?v=20260532" defer></script>
-  <script src="../data/reagent-megalibrary.js?v=20260532" defer></script>
-  <script src="../data/external-sources.js?v=20260532" defer></script>
-  <script src="../scripts/site-shell.js?v=20260532" defer></script>
-  <script src="../scripts/search-page.js?v=20260532" defer></script>
+  <link rel="stylesheet" href="../assets/styles.css?v=20260534" />
+  <link rel="stylesheet" href="../assets/portal.css?v=20260534" />
+  <script src="../data/chem-data.js?v=20260534" defer></script>
+  <script src="../data/reagent-extension.js?v=20260534" defer></script>
+  <script src="../data/research-data.js?v=20260534" defer></script>
+  <script src="../data/dossier-data.js?v=20260534" defer></script>
+  <script src="../data/method-data.js?v=20260534" defer></script>
+  <script src="../data/spectroscopy-data.js?v=20260534" defer></script>
+  <script src="../data/materials-data.js?v=20260534" defer></script>
+  <script src="../data/database-expansion.js?v=20260534" defer></script>
+  <script src="../data/reagent-megalibrary.js?v=20260534" defer></script>
+  <script src="../data/knowledge-expansion.js?v=20260534" defer></script>
+  <script src="../data/external-sources.js?v=20260534" defer></script>
+  <script src="../scripts/site-shell.js?v=20260534" defer></script>
+  <script src="../scripts/search-page.js?v=20260534" defer></script>
 </head>
 <body class="page-shell">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -29,7 +30,9 @@
     <div class="container nav-shell">
       <a class="brand" href="../index.html"><span class="brand-mark">CV</span><span><strong>ChemVault</strong><small>academic portal</small></span></a>
       <button class="icon-button menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
-      <nav class="site-nav" aria-label="Main navigation"><a href="../index.html">Home</a><a href="search.html">Search</a><a href="research.html">Research</a><a href="dossiers.html">Dossiers</a><a href="methods.html">Methods</a><a href="spectroscopy.html">Spectroscopy</a><a href="materials.html">Materials</a><a href="reagents.html">Reagents</a><a href="atlas.html">Atlas</a><a href="library.html">Library</a></nav>
+      <nav class="site-nav" aria-label="Main navigation"><a href="../index.html">Home</a><a href="app.html">App</a>
+        <a href="workbench.html">Workbench</a>
+        <a href="search.html">Search</a><a href="research.html">Research</a><a href="dossiers.html">Dossiers</a><a href="methods.html">Methods</a><a href="spectroscopy.html">Spectroscopy</a><a href="materials.html">Materials</a><a href="reagents.html">Reagents</a><a href="atlas.html">Atlas</a><a href="library.html">Library</a></nav>
       <div class="header-actions"><label class="search-shell" for="shellSearch"><span>Search</span><input id="shellSearch" type="search" placeholder="Search local records..." /></label><button class="small-button" type="button" data-shell-action="theme">Theme</button></div>
     </div>
     <div class="container shell-search-results" id="shellSearchResults" aria-live="polite"></div>
@@ -63,6 +66,8 @@
             <label for="searchScope">Local scope</label>
             <select id="searchScope">
               <option value="all">All local records</option>
+              <option value="reaction">Reaction systems</option>
+              <option value="reactant">Reactant classes</option>
               <option value="reagent">Reagents</option>
               <option value="compound">Compounds</option>
               <option value="material">Materials</option>

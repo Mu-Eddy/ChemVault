@@ -47,6 +47,18 @@
       body: [item.category, item.use, item.mechanism].filter(Boolean).join(" | "),
       href: `pages/reagents.html?id=${item.id}`
     }));
+    (data.reactionSystems || []).forEach((item) => rows.push({
+      type: "Reaction system",
+      title: item.name,
+      body: [item.className, item.domain, ...(item.conditions || []), ...(item.readouts || [])].filter(Boolean).join(" | "),
+      href: `pages/workbench.html?id=${item.id}`
+    }));
+    (data.reactants || []).forEach((item) => rows.push({
+      type: "Reactant class",
+      title: item.name,
+      body: [item.className, ...(item.functionalGroups || []), ...(item.compatibleMethods || [])].filter(Boolean).join(" | "),
+      href: `pages/workbench.html?q=${encode(item.name)}`
+    }));
     (data.compounds || []).forEach((item) => rows.push({
       type: "Compound record",
       title: item.name,
@@ -76,6 +88,8 @@
 
   function renderMetrics() {
     const metrics = {
+      metricSystems: count(data.reactionSystems),
+      metricReactants: count(data.reactants),
       metricReagents: count(data.reagents),
       metricCompounds: count(data.compounds),
       metricMaterials: count(materialsData.materials),
