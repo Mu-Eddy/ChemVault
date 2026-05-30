@@ -32,7 +32,10 @@ const staticUrls = [
   { path: "/pages/materials.html", priority: "0.8", changefreq: "monthly" },
   { path: "/pages/reagents.html", priority: "0.8", changefreq: "monthly" },
   { path: "/pages/atlas.html", priority: "0.7", changefreq: "monthly" },
-  { path: "/pages/library.html", priority: "0.7", changefreq: "monthly" }
+  { path: "/pages/library.html", priority: "0.7", changefreq: "monthly" },
+  { path: "/pages/about.html", priority: "0.5", changefreq: "monthly" },
+  { path: "/pages/team.html", priority: "0.5", changefreq: "monthly" },
+  { path: "/pages/developer.html", priority: "0.5", changefreq: "monthly" }
 ];
 
 const context = {

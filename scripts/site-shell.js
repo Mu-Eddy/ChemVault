@@ -108,7 +108,7 @@
     footer.className = "site-footer";
     footer.innerHTML = `
       <div class="container footer-grid developer-footer-grid">
-        <strong>© 2026 ChemVault. Developed by Edward Mu.</strong>
+        <strong>© 2026 ChemVault. Developed Ziwen M.</strong>
       </div>
     `;
     if (version) version.before(footer);

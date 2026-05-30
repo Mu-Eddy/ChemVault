@@ -56,7 +56,7 @@
     const [selectedRecord, setSelectedRecord] = React.useState(null);
 
     React.useEffect(() => {
-      fetch("../data/chemvault-data.json?v=20260543")
+      fetch("../data/chemvault-data.json?v=20260544")
         .then((response) => {
           if (!response.ok) throw new Error(`Dataset request failed with ${response.status}`);
           return response.json();

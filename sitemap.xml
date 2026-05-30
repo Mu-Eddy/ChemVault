@@ -73,6 +73,24 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://chemvault.pages.dev/pages/about.html</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://chemvault.pages.dev/pages/team.html</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://chemvault.pages.dev/pages/developer.html</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://chemvault.pages.dev/pages/record.html?type=reaction&amp;id=suzuki-miyaura-platform</loc>
     <lastmod>2026-05-30</lastmod>
     <changefreq>monthly</changefreq>
