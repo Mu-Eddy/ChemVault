@@ -2,6 +2,7 @@
   "name": "chemvault",
   "version": "0.2.3",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "wrangler pages dev . --d1 DB=chemvault",

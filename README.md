@@ -1,5 +1,12 @@
 # ChemVault
 
+## License
+
+This repository is source-available but not open source.
+
+Copyright © 2026 Ziwen Mu.
+All rights reserved.
+
 ChemVault is a Cloudflare Pages-ready chemistry portal with a local-first chemistry database, academic search enrichment and a D1-backed dynamic API route.
 
 Current version: `v0.2.3`.
