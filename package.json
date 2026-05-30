@@ -1,12 +1,14 @@
 {
   "name": "chemvault",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler pages dev . --d1 DB=chemvault",
     "deploy": "wrangler pages deploy . --project-name chemvault",
     "deploy:pages": "wrangler pages deploy . --project-name chemvault",
+    "data:json": "node scripts/export-data-json.mjs",
+    "sitemap": "node scripts/generate-sitemap.mjs",
     "seed:build": "node scripts/export-d1-seed.mjs",
     "d1:schema": "wrangler d1 execute chemvault --file=schema.sql",
     "d1:seed": "npm run seed:build && wrangler d1 execute chemvault --file=seed.sql",

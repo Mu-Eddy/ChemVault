@@ -1,5 +1,5 @@
 (() => {
-  const SITE_VERSION = "v0.2.2";
+  const SITE_VERSION = "v0.2.3";
   const importedStoreKey = "chemvault-imported-records";
 
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -424,7 +424,17 @@
       })));
     }
 
-    return records;
+    return dedupeRecords(records);
+  }
+
+  function dedupeRecords(records) {
+    const seen = new Set();
+    return records.filter((record) => {
+      const key = `${record.type}:${record.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   function findRecord(type, id, records = buildRecords({ includeImported: true })) {

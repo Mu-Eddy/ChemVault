@@ -12,6 +12,7 @@ const files = [
   "data/database-expansion.js",
   "data/reagent-megalibrary.js",
   "data/knowledge-expansion.js",
+  "data/local-catalog-2000.js",
   "data/external-sources.js"
 ];
 
@@ -25,7 +26,7 @@ for (const file of files) {
 }
 
 const payload = {
-  version: "0.2.2",
+  version: "0.2.3",
   generatedAt: new Date().toISOString(),
   chem: context.window.CHEMVAULT_DATA || {},
   research: context.window.CHEMVAULT_RESEARCH || {},
