@@ -191,6 +191,41 @@ button {
   font-size: 0.86rem;
 }
 
+@media (min-width: 1321px) {
+  .site-header.nav-stacked .nav-shell {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 8px;
+  }
+
+  .site-header.nav-stacked .brand {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .site-header.nav-stacked .header-actions {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .site-header.nav-stacked .site-nav {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-top: 2px;
+  }
+
+  .site-header.nav-stacked .site-nav a {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.56);
+    padding: 8px 10px;
+  }
+
+  .site-header.nav-stacked .search-shell {
+    grid-template-columns: auto minmax(170px, 220px);
+  }
+}
+
 .search-shell input {
   width: 100%;
   border: 0;
