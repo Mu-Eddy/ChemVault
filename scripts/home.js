@@ -8,6 +8,13 @@
   const normalise = (value) => String(value || "").toLowerCase();
 
   const count = (items) => Array.isArray(items) ? items.length : 0;
+  const typeKey = (record, index) => `${record.type || record.typeLabel || "record"}:${record.id || record.title || index}`;
+  const compoundCategoryPatterns = {
+    reactants: /\b(reactant|substrate|alkane|alkene|alkyne|cycloalkane|alcohol|aldehyde|ketone|carboxylic acid|ester|amine|alkyl halide|carbonyl|hydrocarbon|oxygenate|nitrogen compound)\b/,
+    reagents: /\b(reagent|solvent|acid|base|oxidizer|catalyst|halogen|alcohol|aldehyde|ketone|ester|amine|alkyl halide|chloride|bromide|iodide|fluoride)\b/,
+    materials: /\b(material|polymer|nanomaterial|oxide|salt|metal|inorganic|graphene|silica|alumina|zeolite|hydrogel|mof|alloy|ceramic)\b/,
+    mechanisms: /\b(mechanism|substitution|elimination|addition|oxidation|reduction|hydrolysis|polymerization|carbonyl|alkene|alkyne|acid|base|amine|ester|halide|pi bond)\b/
+  };
 
   function initShell() {
     const header = $(".site-header");
@@ -95,7 +102,15 @@
   }
 
   function renderMetrics() {
-    const metrics = {
+    const metrics = classifiedMetrics();
+    Object.entries(metrics).forEach(([id, value]) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = value;
+    });
+  }
+
+  function rawMetrics() {
+    return {
       metricSystems: count(data.reactionSystems),
       metricReactants: count(data.reactants),
       metricReagents: count(data.reagents),
@@ -104,10 +119,78 @@
       metricMechanisms: count(data.mechanisms),
       metricSources: count(external.sources)
     };
-    Object.entries(metrics).forEach(([id, value]) => {
-      const node = document.getElementById(id);
-      if (node) node.textContent = value;
+  }
+
+  function classifiedMetrics() {
+    const records = metricRecords();
+    if (!records.length) return rawMetrics();
+
+    const buckets = {
+      metricSystems: new Set(),
+      metricReactants: new Set(),
+      metricReagents: new Set(),
+      metricCompounds: new Set(),
+      metricMaterials: new Set(),
+      metricMechanisms: new Set()
+    };
+
+    records.forEach((record, index) => {
+      const type = normalise(record.type);
+      const key = typeKey(record, index);
+      const text = metricText(record);
+      const compound = type === "compound";
+
+      if (type === "reaction") buckets.metricSystems.add(key);
+      if (type === "reactant" || (compound && compoundCategoryPatterns.reactants.test(text))) buckets.metricReactants.add(key);
+      if (type === "reagent" || (compound && compoundCategoryPatterns.reagents.test(text))) buckets.metricReagents.add(key);
+      if (compound) buckets.metricCompounds.add(key);
+      if (type === "material" || (compound && compoundCategoryPatterns.materials.test(text))) buckets.metricMaterials.add(key);
+      if (type === "mechanism" || (compound && compoundCategoryPatterns.mechanisms.test(text))) buckets.metricMechanisms.add(key);
     });
+
+    const fallback = rawMetrics();
+    return {
+      metricSystems: buckets.metricSystems.size || fallback.metricSystems,
+      metricReactants: buckets.metricReactants.size || fallback.metricReactants,
+      metricReagents: buckets.metricReagents.size || fallback.metricReagents,
+      metricCompounds: buckets.metricCompounds.size || fallback.metricCompounds,
+      metricMaterials: buckets.metricMaterials.size || fallback.metricMaterials,
+      metricMechanisms: buckets.metricMechanisms.size || fallback.metricMechanisms,
+      metricSources: fallback.metricSources
+    };
+  }
+
+  function metricRecords() {
+    const records = window.CHEMVAULT_RECORDS;
+    if (!records?.buildRecords) return [];
+    try {
+      return records.buildRecords({ includeImported: false });
+    } catch {
+      return [];
+    }
+  }
+
+  function metricText(record) {
+    const raw = record.raw || {};
+    return normalise([
+      record.type,
+      record.typeLabel,
+      record.title,
+      record.subtitle,
+      record.body,
+      record.domain,
+      record.family,
+      record.category,
+      record.formula,
+      record.risk,
+      ...(record.tags || []),
+      raw.family,
+      raw.category,
+      raw.summary,
+      raw.evidenceNote,
+      ...(raw.tags || []),
+      ...(raw.synonyms || [])
+    ].filter(Boolean).join(" "));
   }
 
   async function renderBackendStatus() {

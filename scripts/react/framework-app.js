@@ -1,6 +1,50 @@
 (function () {
   const h = React.createElement;
   const C = window.ChemVaultReact;
+  const text = (value) => String(value || "").toLowerCase();
+  const compoundCategoryPatterns = {
+    reactants: /\b(reactant|substrate|alkane|alkene|alkyne|cycloalkane|alcohol|aldehyde|ketone|carboxylic acid|ester|amine|alkyl halide|carbonyl|hydrocarbon|oxygenate|nitrogen compound)\b/,
+    reagents: /\b(reagent|solvent|acid|base|oxidizer|catalyst|halogen|alcohol|aldehyde|ketone|ester|amine|alkyl halide|chloride|bromide|iodide|fluoride)\b/,
+    materials: /\b(material|polymer|nanomaterial|oxide|salt|metal|inorganic|graphene|silica|alumina|zeolite|hydrogel|mof|alloy|ceramic)\b/,
+    mechanisms: /\b(mechanism|substitution|elimination|addition|oxidation|reduction|hydrolysis|polymerization|carbonyl|alkene|alkyne|acid|base|amine|ester|halide|pi bond)\b/
+  };
+
+  function classifiedMetrics(payload) {
+    const chem = payload.chem || {};
+    const materials = payload.materials || {};
+    const buckets = {
+      reactants: new Set((chem.reactants || []).map((item, index) => `reactant:${item.id || item.name || index}`)),
+      reagents: new Set((chem.reagents || []).map((item, index) => `reagent:${item.id || item.name || index}`)),
+      materials: new Set((materials.materials || []).map((item, index) => `material:${item.id || item.name || index}`)),
+      mechanisms: new Set((chem.mechanisms || []).map((item, index) => `mechanism:${item.id || item.name || index}`))
+    };
+
+    (chem.compounds || []).forEach((compound, index) => {
+      const key = `compound:${compound.id || compound.name || index}`;
+      const haystack = text([
+        compound.name,
+        compound.formula,
+        compound.family,
+        compound.summary,
+        compound.evidenceNote,
+        ...(compound.tags || []),
+        ...(compound.synonyms || [])
+      ].filter(Boolean).join(" "));
+      if (compoundCategoryPatterns.reactants.test(haystack)) buckets.reactants.add(key);
+      if (compoundCategoryPatterns.reagents.test(haystack)) buckets.reagents.add(key);
+      if (compoundCategoryPatterns.materials.test(haystack)) buckets.materials.add(key);
+      if (compoundCategoryPatterns.mechanisms.test(haystack)) buckets.mechanisms.add(key);
+    });
+
+    return {
+      reactionSystems: chem.reactionSystems?.length || 0,
+      reactants: buckets.reactants.size,
+      reagents: buckets.reagents.size,
+      compounds: chem.compounds?.length || 0,
+      materials: buckets.materials.size,
+      mechanisms: buckets.mechanisms.size
+    };
+  }
 
   function FrameworkApp() {
     const [loading, setLoading] = React.useState(true);
@@ -12,7 +56,7 @@
     const [selectedRecord, setSelectedRecord] = React.useState(null);
 
     React.useEffect(() => {
-      fetch("../data/chemvault-data.json?v=20260542")
+      fetch("../data/chemvault-data.json?v=20260543")
         .then((response) => {
           if (!response.ok) throw new Error(`Dataset request failed with ${response.status}`);
           return response.json();
@@ -45,13 +89,14 @@
     if (!payload) return null;
 
     const domains = ["all", ...new Set((payload.chem?.reactionSystems || []).map((item) => item.domain).filter(Boolean))];
+    const metricCounts = classifiedMetrics(payload);
     const metrics = [
-      { label: "Reaction systems", value: payload.chem?.reactionSystems?.length || 0, note: "dynamic systems" },
-      { label: "Reactants", value: payload.chem?.reactants?.length || 0, note: "substrate classes" },
-      { label: "Reagents", value: payload.chem?.reagents?.length || 0, note: "local records" },
-      { label: "Compounds", value: payload.chem?.compounds?.length || 0, note: "molecule records" },
-      { label: "Materials", value: payload.materials?.materials?.length || 0, note: "materials atlas" },
-      { label: "Mechanisms", value: payload.chem?.mechanisms?.length || 0, note: "mechanism nodes" }
+      { label: "Reaction systems", value: metricCounts.reactionSystems, note: "dynamic systems" },
+      { label: "Reactants", value: metricCounts.reactants, note: "classified records" },
+      { label: "Reagents", value: metricCounts.reagents, note: "classified records" },
+      { label: "Compounds", value: metricCounts.compounds, note: "molecule records" },
+      { label: "Materials", value: metricCounts.materials, note: "classified records" },
+      { label: "Mechanisms", value: metricCounts.mechanisms, note: "classified records" }
     ];
     const sourceLinks = (payload.external?.sources || []).slice(0, 5).map((source) => {
       const term = encodeURIComponent(query || "chemistry reaction mechanism");
