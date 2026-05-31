@@ -174,10 +174,15 @@
   function thumbnailFor(hit) {
     if (hit.imageUrl) return hit.imageUrl;
     const type = String(hit.type || "").toLowerCase();
-    if ((type.includes("compound") || type.includes("reagent")) && hit.title) {
+    if ((type.includes("compound") || type.includes("reagent")) && canUsePubChemName(hit.title)) {
       return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(hit.title.replace(/^.*·\s*/, ""))}/PNG?record_type=2d&image_size=small`;
     }
     return placeholderImage(hit.type, hit.title);
+  }
+
+  function canUsePubChemName(title) {
+    const text = String(title || "").trim();
+    return Boolean(text) && !/\breference\b/i.test(text) && !/^syscat-/i.test(text);
   }
 
   function placeholderImage(type, title, subtitle = "") {

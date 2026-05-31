@@ -99,10 +99,15 @@
   function thumbnailFor(item) {
     if (item.imageUrl) return displayImageUrl(item.imageUrl);
     const type = `${item.recordType || ""} ${item.type || ""}`.toLowerCase();
-    if ((type.includes("compound") || type.includes("reagent")) && item.title) {
+    if ((type.includes("compound") || type.includes("reagent")) && canUsePubChemName(item.title)) {
       return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(item.title)}/PNG?record_type=2d&image_size=large`;
     }
     return placeholderImage(item.type || item.recordType || "Record", item.title || "ChemVault", item.family || item.domain || "");
+  }
+
+  function canUsePubChemName(title) {
+    const text = String(title || "").trim();
+    return Boolean(text) && !/\breference\b/i.test(text) && !/^syscat-/i.test(text);
   }
 
   function displayImageUrl(url) {

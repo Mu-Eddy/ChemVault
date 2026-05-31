@@ -12,7 +12,7 @@ const dataFiles = [
   "data/database-expansion.js",
   "data/reagent-megalibrary.js",
   "data/knowledge-expansion.js",
-  "data/local-catalog-2000.js",
+  "data/local-catalog-10000.js",
   "data/external-sources.js",
   "scripts/record-utils.js"
 ];

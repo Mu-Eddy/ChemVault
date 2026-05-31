@@ -18,6 +18,11 @@
   --ink: #ffffff;
   --shadow: 0 18px 54px rgba(0, 0, 0, 0.08);
   --radius: 8px;
+  --motion-fast: 150ms;
+  --motion-medium: 260ms;
+  --motion-slow: 520ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 body.light-mode {
@@ -43,6 +48,18 @@ html {
   scroll-behavior: smooth;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: chemvault-view-out 220ms var(--ease-out) both;
+}
+
+::view-transition-new(root) {
+  animation: chemvault-view-in 340ms var(--ease-out) both;
+}
+
 body {
   margin: 0;
   color: var(--text);
@@ -55,6 +72,17 @@ body {
 
 body.light-mode {
   background: var(--bg);
+}
+
+html.motion-available body:not(.page-ready) main {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+body.page-ready main {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--motion-medium) var(--ease-out), transform var(--motion-medium) var(--ease-out);
 }
 
 a {
@@ -101,6 +129,11 @@ button {
   backdrop-filter: saturate(180%) blur(20px);
   background: rgba(251, 251, 253, 0.82);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  transition: background var(--motion-medium) ease, border-color var(--motion-medium) ease, box-shadow var(--motion-medium) ease;
+}
+
+body.page-is-leaving .site-header {
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.09);
 }
 
 .nav-shell {
@@ -116,6 +149,12 @@ button {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  transition: transform var(--motion-fast) var(--ease-spring);
+}
+
+.brand:hover,
+.brand:focus-visible {
+  transform: translateY(-1px);
 }
 
 .brand-mark {
@@ -128,6 +167,13 @@ button {
   background: #1d1d1f;
   color: #ffffff;
   font-weight: 900;
+  transition: transform var(--motion-medium) var(--ease-spring), box-shadow var(--motion-medium) ease;
+}
+
+.brand:hover .brand-mark,
+.brand:focus-visible .brand-mark {
+  transform: rotate(-4deg) scale(1.04);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .brand strong,
@@ -151,13 +197,28 @@ button {
 }
 
 .site-nav a {
+  position: relative;
   color: var(--muted);
   padding: 7px 7px;
   border-radius: 6px;
   font-size: 0.82rem;
   line-height: 1.1;
   white-space: nowrap;
-  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+  transition: color var(--motion-fast) ease, background var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+
+.site-nav a::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--amber);
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition: opacity var(--motion-fast) ease, transform var(--motion-fast) var(--ease-out);
 }
 
 .site-nav a:hover,
@@ -170,6 +231,13 @@ button {
 .site-nav a[aria-current] {
   color: var(--text);
   background: rgba(0, 0, 0, 0.06);
+}
+
+.site-nav a[aria-current]::after,
+.site-nav a:hover::after,
+.site-nav a:focus-visible::after {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 .header-actions {
@@ -189,6 +257,13 @@ button {
   padding: 5px 7px;
   color: var(--muted);
   font-size: 0.86rem;
+  transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+}
+
+.search-shell:focus-within {
+  border-color: color-mix(in srgb, var(--amber) 54%, var(--line));
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(0, 113, 227, 0.11);
 }
 
 @media (min-width: 1321px) {
@@ -255,14 +330,15 @@ button {
   border-radius: var(--radius);
   background: var(--surface);
   padding: 10px;
-  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+  transition: border-color var(--motion-fast) ease, transform var(--motion-fast) var(--ease-spring), background var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
 }
 
 .search-hit:hover,
 .search-hit:focus-visible {
   border-color: var(--strong-line);
-  background: rgba(255, 255, 255, 0.06);
-  transform: translateY(-1px);
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .search-hit img {
@@ -300,11 +376,13 @@ button {
   color: var(--text);
   background: rgba(255, 255, 255, 0.04);
   transition:
-    transform 150ms ease,
-    border-color 150ms ease,
-    background 150ms ease,
-    box-shadow 150ms ease,
-    opacity 150ms ease;
+    transform var(--motion-fast) var(--ease-spring),
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    opacity var(--motion-fast) ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .primary-button,
@@ -364,6 +442,146 @@ button {
   color: var(--muted);
 }
 
+.page-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background: rgba(245, 245, 247, 0.58);
+  backdrop-filter: blur(18px) saturate(160%);
+  transition: opacity var(--motion-medium) ease, visibility var(--motion-medium) ease;
+}
+
+.page-transition.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.page-transition__panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: center;
+  width: min(320px, calc(100vw - 48px));
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.14);
+  padding: 14px;
+  transform: translateY(10px) scale(0.98);
+  transition: transform var(--motion-medium) var(--ease-out);
+}
+
+.page-transition.is-active .page-transition__panel {
+  transform: translateY(0) scale(1);
+}
+
+.page-transition__mark {
+  grid-row: 1 / span 2;
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(0, 113, 227, 0.16);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: chemvault-spin 820ms linear infinite;
+}
+
+.page-transition__copy {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-transition__rail {
+  position: relative;
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.page-transition__rail::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 44%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  animation: chemvault-rail 920ms var(--ease-out) infinite;
+}
+
+.motion-ripple {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: rgba(0, 113, 227, 0.16);
+  transform: translate(-50%, -50%) scale(0);
+  animation: chemvault-ripple 620ms ease-out forwards;
+}
+
+.motion-available [data-motion-bound="true"] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity var(--motion-slow) var(--ease-out),
+    transform var(--motion-slow) var(--ease-out),
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+  transition-delay: calc(var(--motion-order, 0) * 30ms);
+}
+
+.motion-available [data-motion-bound="true"].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes chemvault-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chemvault-rail {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(240%);
+  }
+}
+
+@keyframes chemvault-ripple {
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes chemvault-view-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.995);
+  }
+}
+
+@keyframes chemvault-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(1.005);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -371,6 +589,10 @@ button {
     animation-duration: 1ms !important;
     scroll-behavior: auto !important;
     transition-duration: 1ms !important;
+  }
+
+  .page-transition {
+    display: none;
   }
 }
 
@@ -614,6 +836,16 @@ textarea {
   color: var(--text);
   outline: 0;
   padding: 11px 12px;
+  transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease, box-shadow var(--motion-fast) ease, transform var(--motion-fast) var(--ease-spring);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: color-mix(in srgb, var(--amber) 54%, var(--line));
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(0, 113, 227, 0.1);
+  transform: translateY(-1px);
 }
 
 select {

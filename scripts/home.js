@@ -373,7 +373,12 @@
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const query = input.value.trim();
-      window.location.href = query ? `pages/search.html?q=${encode(query)}` : "pages/search.html";
+      const target = query ? `pages/search.html?q=${encode(query)}` : "pages/search.html";
+      if (window.CHEMVAULT_MOTION?.navigate) {
+        window.CHEMVAULT_MOTION.navigate(target, "Academic Search");
+        return;
+      }
+      window.location.href = target;
     });
   }
 
@@ -397,10 +402,15 @@
 
   function thumbnailFor(item) {
     if (item.imageUrl) return item.imageUrl;
-    if (/reagent|compound/i.test(item.type || "") && item.title) {
+    if (/reagent|compound/i.test(item.type || "") && canUsePubChemName(item.title)) {
       return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(item.title.replace(/^.*·\s*/, ""))}/PNG?record_type=2d&image_size=small`;
     }
     return placeholderImage(item.type, item.title);
+  }
+
+  function canUsePubChemName(title) {
+    const text = String(title || "").trim();
+    return Boolean(text) && !/\breference\b/i.test(text) && !/^syscat-/i.test(text);
   }
 
   function placeholderImage(type, title, subtitle = "") {

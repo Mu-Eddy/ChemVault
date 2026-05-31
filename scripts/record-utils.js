@@ -18,6 +18,7 @@
   const unique = (values) => [...new Set((values || []).flat().filter(Boolean).map(String))];
   const routeId = (route) => `route-${slug(route?.start)}-${slug(route?.target)}`;
   const slug = (value) => String(value || "record").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  let curatedRecordCache = null;
 
   function makeRecord(input) {
     const tags = unique(input.tags);
@@ -138,6 +139,11 @@
   }
 
   function buildRecords(options = {}) {
+    if (curatedRecordCache) {
+      const cachedRecords = curatedRecordCache.slice();
+      return options.includeImported ? appendImportedRecords(cachedRecords) : cachedRecords;
+    }
+
     const data = window.CHEMVAULT_DATA || {};
     const research = window.CHEMVAULT_RESEARCH || {};
     const dossiers = window.CHEMVAULT_DOSSIERS || {};
@@ -405,25 +411,28 @@
       raw: item
     })));
 
-    if (options.includeImported) {
-      getImportedRecords().forEach((item) => records.push(makeRecord({
-        id: item.id,
-        type: item.type?.toLowerCase().replace(/\s+/g, "-") || "imported",
-        typeLabel: item.type || "Imported record",
-        title: item.title,
-        body: item.body,
-        tags: item.tags || [],
-        external: true,
-        href: item.href,
-        importedAt: item.importedAt,
-        sections: [
-          { title: "Imported body", items: [item.body].filter(Boolean) },
-          { title: "Session tags", items: item.tags || [] }
-        ],
-        raw: item
-      })));
-    }
+    curatedRecordCache = dedupeRecords(records);
+    const curatedRecords = curatedRecordCache.slice();
+    return options.includeImported ? appendImportedRecords(curatedRecords) : curatedRecords;
+  }
 
+  function appendImportedRecords(records) {
+    getImportedRecords().forEach((item) => records.push(makeRecord({
+      id: item.id,
+      type: item.type?.toLowerCase().replace(/\s+/g, "-") || "imported",
+      typeLabel: item.type || "Imported record",
+      title: item.title,
+      body: item.body,
+      tags: item.tags || [],
+      external: true,
+      href: item.href,
+      importedAt: item.importedAt,
+      sections: [
+        { title: "Imported body", items: [item.body].filter(Boolean) },
+        { title: "Session tags", items: item.tags || [] }
+      ],
+      raw: item
+    })));
     return dedupeRecords(records);
   }
 
@@ -483,7 +492,7 @@
 
   function recordImage(type, title, subtitle = "") {
     const key = compact(`${type} ${title}`);
-    if ((key.includes("reagent") || key.includes("compound")) && title) {
+    if ((key.includes("reagent") || key.includes("compound")) && title && !/\breference\b/i.test(title)) {
       return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(title)}/PNG?record_type=2d&image_size=large`;
     }
     return placeholderImage(type || "Record", title || "ChemVault", subtitle || "");

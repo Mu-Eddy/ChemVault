@@ -855,8 +855,13 @@ function uniqueStrings(values) {
 function imageForRecord(record) {
   if (record.imageUrl) return record.imageUrl;
   if (record.raw?.imageUrl) return record.raw.imageUrl;
-  if (record.raw?.cid) return pubChemImageUrl(record.raw.cid);
+  if (record.raw?.cid && canUsePubChemImage(record)) return pubChemImageUrl(record.raw.cid);
   return placeholderImage(record.typeLabel || record.type || "Record", record.title || record.id || "ChemVault", record.family || record.domain || "");
+}
+
+function canUsePubChemImage(record) {
+  const title = String(record.title || record.id || "").trim();
+  return Boolean(title) && !/\breference\b/i.test(title) && !/^syscat-/i.test(title);
 }
 
 function pubChemImageUrl(cid) {

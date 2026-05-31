@@ -31,6 +31,8 @@
 }
 
 .page-index-card {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background:
@@ -54,6 +56,8 @@
 }
 
 .portal-card {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background:
@@ -61,14 +65,43 @@
     color-mix(in srgb, var(--surface) 92%, transparent);
   padding: 16px;
   min-height: 178px;
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  transition: transform var(--motion-medium) var(--ease-spring), border-color var(--motion-fast) ease, background var(--motion-fast) ease, box-shadow var(--motion-medium) ease;
+}
+
+.portal-card::after,
+.page-panel::after,
+.page-index-card::after,
+.data-window::after,
+.local-result-card::after,
+.external-source-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.34) 42%, transparent 68%);
+  opacity: 0;
+  transform: translateX(-18%);
+  transition: opacity var(--motion-medium) ease, transform var(--motion-medium) var(--ease-out);
 }
 
 .portal-card:hover,
 .portal-card:focus-visible {
   border-color: var(--strong-line);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+}
+
+.portal-card:hover::after,
+.portal-card:focus-visible::after,
+.page-panel:hover::after,
+.page-index-card:hover::after,
+.data-window:hover::after,
+.local-result-card:hover::after,
+.local-result-card:focus-visible::after,
+.external-source-card:hover::after,
+.external-source-card:focus-visible::after {
+  opacity: 1;
+  transform: translateX(14%);
 }
 
 .portal-card span {
@@ -106,6 +139,7 @@
 }
 
 .page-panel {
+  position: relative;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background:
@@ -173,6 +207,7 @@
 }
 
 .data-window {
+  position: relative;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.035);
@@ -402,6 +437,8 @@ body.light-mode .graph-board {
 
 .external-source-card,
 .local-result-card {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: 8px;
   border: 1px solid var(--line);
@@ -410,7 +447,7 @@ body.light-mode .graph-board {
     linear-gradient(145deg, rgba(82, 199, 184, 0.06), transparent 42%),
     color-mix(in srgb, var(--surface) 94%, transparent);
   padding: 15px;
-  transition: transform 160ms ease, border-color 160ms ease;
+  transition: transform var(--motion-medium) var(--ease-spring), border-color var(--motion-fast) ease, box-shadow var(--motion-medium) ease;
 }
 
 .external-source-card:hover,
@@ -418,7 +455,8 @@ body.light-mode .graph-board {
 .local-result-card:hover,
 .local-result-card:focus-visible {
   border-color: var(--strong-line);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
 }
 
 .external-source-card strong,

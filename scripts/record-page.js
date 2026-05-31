@@ -105,7 +105,7 @@
                 ${field("signalWord", record.signalWord)}
                 ${field("disposalMethod", record.disposalMethod)}
                 ${field("safetySource", record.safetySource)}
-                ${field("imageUrl", image, true)}
+                ${imageField(image)}
                 ${field("sourceHref", sourceHref, true)}
                 ${field("checkStatus", record.checkStatus)}
                 ${field("checkedAt", record.checkedAt)}
@@ -265,6 +265,18 @@
       ? `<a href="${esc(text)}" target="_blank" rel="noreferrer">${esc(text)}</a>`
       : `<span>${esc(text)}</span>`;
     return `<div><strong>${esc(label)}</strong>${content}</div>`;
+  }
+
+  function imageField(value) {
+    const text = String(value || "").trim();
+    if (!text) return field("image", "");
+    if (/^data:image\//i.test(text)) {
+      return `<div><strong>image</strong><span>Generated ChemVault preview</span></div>`;
+    }
+    if (/^https?:\/\//i.test(text)) {
+      return `<div><strong>image</strong><a href="${esc(text)}" target="_blank" rel="noreferrer">Open image source</a></div>`;
+    }
+    return `<div><strong>image</strong><span>${esc(text)}</span></div>`;
   }
 
   function wireRecordImages(root) {
