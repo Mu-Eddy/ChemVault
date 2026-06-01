@@ -1751,15 +1751,16 @@ td strong {
 
 .site-footer {
   border-top: 1px solid var(--line);
-  padding: 28px 0 40px;
+  padding: 28px 0 34px;
+  background: color-mix(in srgb, var(--surface) 78%, var(--bg));
 }
 
 .footer-grid {
   display: flex;
-  justify-content: center;
-  gap: 20px;
-  align-items: center;
-  text-align: center;
+  justify-content: space-between;
+  gap: 22px;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .developer-footer-grid {
@@ -1770,6 +1771,23 @@ td strong {
   display: block;
   color: var(--text);
   margin: 0;
+}
+
+.developer-footer-grid span,
+.developer-footer-grid p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.developer-footer-grid a {
+  color: var(--amber);
+  font-weight: 800;
+}
+
+.developer-footer-grid p {
+  max-width: 560px;
 }
 
 .site-version {

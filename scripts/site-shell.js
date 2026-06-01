@@ -109,7 +109,11 @@
     footer.className = "site-footer";
     footer.innerHTML = `
       <div class="container footer-grid developer-footer-grid">
-        <strong>© 2026 ChemVault. Developed Ziwen M.</strong>
+        <div>
+          <strong>© 2026 ChemVault. All rights reserved.</strong>
+          <span>Contact: <a href="mailto:contact@chemvault.science">contact@chemvault.science</a></span>
+        </div>
+        <p>ChemVault is for educational purposes only. Data may contain errors; double-checking is required.</p>
       </div>
     `;
     if (version) version.before(footer);
