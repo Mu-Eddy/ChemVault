@@ -41,7 +41,15 @@
     const related = api.relatedRecords(record, records, 10);
     const main = $("#recordMain");
     if (!main) return;
-    const image = record.imageUrl || api.recordImage(record.typeLabel || record.type, record.title, record.subtitle || record.family || record.domain || record.formula || "");
+    const imageMeta = {
+      type: record.typeLabel || record.type,
+      title: record.title,
+      subtitle: record.subtitle || record.family || record.domain || record.formula || ""
+    };
+    const image = record.imageUrl || api.recordImage(imageMeta.type, imageMeta.title, imageMeta.subtitle);
+    const fallbackImage = api.fallbackImage
+      ? api.fallbackImage(imageMeta.type, imageMeta.title, imageMeta.subtitle)
+      : api.recordImage("Record", imageMeta.title, imageMeta.subtitle);
     const sourceHref = record.sourceHref || record.raw?.href || record.href || "";
     main.innerHTML = `
       <section class="page-hero record-hero">
@@ -57,7 +65,7 @@
             </div>
           </div>
           <aside class="page-index-card record-index-card">
-            <img class="record-focus-image" src="${esc(image)}" data-fallback-src="${esc(api.recordImage(record.typeLabel || record.type, record.title, record.subtitle || ""))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+            <img class="record-focus-image" src="${esc(image)}" data-fallback-src="${esc(fallbackImage)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
             <strong>Record status</strong>
             <div class="record-fact-grid">
               ${fact("Type", record.typeLabel)}
@@ -281,11 +289,13 @@
 
   function wireRecordImages(root) {
     root.querySelectorAll("img[data-fallback-src]").forEach((image) => {
-      image.addEventListener("error", () => {
+      const applyFallback = () => {
         if (image.dataset.fallbackApplied) return;
         image.dataset.fallbackApplied = "true";
         image.src = image.dataset.fallbackSrc;
-      }, { once: true });
+      };
+      image.addEventListener("error", applyFallback, { once: true });
+      if (image.complete && image.naturalWidth === 0) applyFallback();
     });
   }
 

@@ -206,11 +206,13 @@
 
   function wireImageFallbacks(root) {
     root.querySelectorAll("img[data-fallback-src]").forEach((image) => {
-      image.addEventListener("error", () => {
+      const applyFallback = () => {
         if (image.dataset.fallbackApplied) return;
         image.dataset.fallbackApplied = "true";
         image.src = image.dataset.fallbackSrc;
-      }, { once: true });
+      };
+      image.addEventListener("error", applyFallback, { once: true });
+      if (image.complete && image.naturalWidth === 0) applyFallback();
     });
   }
 }());

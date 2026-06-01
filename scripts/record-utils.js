@@ -492,10 +492,23 @@
 
   function recordImage(type, title, subtitle = "") {
     const key = compact(`${type} ${title}`);
-    if ((key.includes("reagent") || key.includes("compound")) && title && !/\breference\b/i.test(title)) {
+    if ((key.includes("reagent") || key.includes("compound")) && canUsePubChemName(title)) {
       return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(title)}/PNG?record_type=2d&image_size=large`;
     }
     return placeholderImage(type || "Record", title || "ChemVault", subtitle || "");
+  }
+
+  function fallbackImage(type, title, subtitle = "") {
+    return placeholderImage(type || "Record", title || "ChemVault", subtitle || "");
+  }
+
+  function canUsePubChemName(title) {
+    const text = String(title || "").trim();
+    return Boolean(text)
+      && !/\breference\b/i.test(text)
+      && !/\b(panel|system|class|mixture|solution|buffer|assay|test|screen|candidate|reaction|oxidation|reduction|hydrogenation|addition|bromination|substitution|elimination|acylation|coupling|ozonolysis|olefination)\b/i.test(text)
+      && !/\b(reagent|catalyst|precatalyst|dispersion|ad-?mix)\b/i.test(text)
+      && !/^syscat-/i.test(text);
   }
 
   function placeholderImage(type, title, subtitle = "") {
@@ -538,6 +551,8 @@
     queryTokens,
     recordUrl,
     recordImage,
+    fallbackImage,
+    placeholderImage,
     routeId,
     buildRecords,
     findRecord,
