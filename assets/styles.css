@@ -301,21 +301,31 @@ body.page-is-leaving .site-header {
 .header-actions {
   display: flex;
   gap: 6px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .search-shell {
   display: grid;
   grid-template-columns: auto 150px;
-  gap: 7px;
+  gap: 10px;
   align-items: center;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.72);
   border-radius: var(--radius);
-  padding: 5px 7px;
+  min-height: 44px;
+  padding: 0 12px;
   color: var(--muted);
   font-size: 0.86rem;
+  line-height: 1;
   transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+}
+
+.search-shell span {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  font-weight: 850;
+  line-height: 1;
 }
 
 .search-shell:focus-within {
@@ -361,11 +371,15 @@ body.page-is-leaving .site-header {
 
 .search-shell input {
   width: 100%;
+  height: auto;
+  min-height: 0;
+  align-self: center;
   border: 0;
-  padding: 5px 0;
+  padding: 0;
   color: var(--text);
   background: transparent;
   outline: 0;
+  line-height: 1.2;
 }
 
 .search-results {

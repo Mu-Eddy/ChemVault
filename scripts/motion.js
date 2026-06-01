@@ -46,7 +46,7 @@
   let mutationObserver;
   let isNavigating = false;
   const visitedKey = "chemvault-visited-pages";
-  const startupKey = "chemvault-startup-loader-seen";
+  const suppressStartupKey = "chemvault-suppress-next-boot";
   const heavyPageNames = new Set(["app.html", "workbench.html", "search.html", "record.html"]);
   const genericLabels = new Set([
     "open page",
@@ -136,7 +136,10 @@
 
       const url = new URL(link.href, window.location.href);
       const label = destinationLabel(link, url);
-      if (!shouldUseNavigationLoader(link, url)) return;
+      if (!shouldUseNavigationLoader(link, url)) {
+        markStartupSuppressed();
+        return;
+      }
 
       event.preventDefault();
       navigate(link.href, label, { loader: true });
@@ -166,6 +169,7 @@
     const useLoader = options.loader ?? shouldUseNavigationLoader(null, url);
 
     const go = () => {
+      markStartupSuppressed();
       window.location.href = href;
     };
 
@@ -193,8 +197,9 @@
   }
 
   function showStartupLoader() {
-    if (reduceMotion.matches || hasSeenStartup()) return false;
-    markStartupSeen();
+    const isBooting = document.documentElement.classList.contains("motion-boot")
+      && !document.documentElement.classList.contains("motion-boot-timeout");
+    if (reduceMotion.matches || !isBooting) return false;
     document.body.dataset.bootLabel = trimLabel(document.body.dataset.bootLabel || pageLabels[pageName(new URL(window.location.href))] || "ChemVault");
     document.body.classList.add("site-is-booting");
     return true;
@@ -205,21 +210,14 @@
       window.clearTimeout(window.CHEMVAULT_BOOT_TIMEOUT);
       window.CHEMVAULT_BOOT_TIMEOUT = null;
     }
+    document.documentElement.classList.remove("motion-boot");
     document.documentElement.classList.remove("motion-boot-timeout");
     document.body.classList.remove("site-is-booting");
   }
 
-  function hasSeenStartup() {
+  function markStartupSuppressed() {
     try {
-      return sessionStorage.getItem(startupKey) === "true";
-    } catch {
-      return false;
-    }
-  }
-
-  function markStartupSeen() {
-    try {
-      sessionStorage.setItem(startupKey, "true");
+      sessionStorage.setItem(suppressStartupKey, "true");
     } catch {
       // Session storage can be unavailable in private contexts.
     }
