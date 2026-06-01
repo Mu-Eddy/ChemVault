@@ -45,6 +45,35 @@
   let revealObserver;
   let mutationObserver;
   let isNavigating = false;
+  const visitedKey = "chemvault-visited-pages";
+  const heavyPageNames = new Set(["app.html", "workbench.html", "search.html", "record.html"]);
+  const genericLabels = new Set([
+    "open page",
+    "open source page",
+    "view details",
+    "search this topic",
+    "search chemvault",
+    "open workbench",
+    "open source"
+  ]);
+  const pageLabels = {
+    "index.html": "Home",
+    "app.html": "App",
+    "workbench.html": "Workbench",
+    "search.html": "Search",
+    "research.html": "Research",
+    "dossiers.html": "Dossiers",
+    "methods.html": "Methods",
+    "spectroscopy.html": "Spectroscopy",
+    "materials.html": "Materials",
+    "reagents.html": "Reagents",
+    "atlas.html": "Atlas",
+    "library.html": "Library",
+    "about.html": "About",
+    "team.html": "Team",
+    "developer.html": "Developer",
+    "record.html": "Record"
+  };
 
   window.CHEMVAULT_MOTION = {
     showNavigation,
@@ -56,6 +85,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     document.documentElement.classList.add("motion-available");
     ensureOverlay();
+    markVisited(new URL(window.location.href));
     wireNavigation();
     wireRipples();
     wireReveal();
@@ -67,6 +97,7 @@
 
   window.addEventListener("pageshow", () => {
     isNavigating = false;
+    markVisited(new URL(window.location.href));
     document.body.classList.remove("page-is-leaving");
     hideNavigation();
   });
@@ -78,9 +109,9 @@
     overlay.setAttribute("aria-hidden", "true");
     overlay.innerHTML = `
       <div class="page-transition__panel" role="status" aria-live="polite">
-        <span class="page-transition__mark" aria-hidden="true"></span>
-        <span class="page-transition__copy">Loading workspace</span>
-        <span class="page-transition__rail" aria-hidden="true"></span>
+        <img class="page-transition__logo" src="/assets/chemvault-logo-mark.png" alt="" decoding="async" />
+        <span class="page-transition__copy">ChemVault</span>
+        <span class="page-transition__rail" aria-hidden="true"><span class="page-transition__bar"></span></span>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -93,9 +124,12 @@
       const link = target?.closest("a[href]");
       if (!link || !shouldTransition(link, event)) return;
 
+      const url = new URL(link.href, window.location.href);
+      const label = destinationLabel(link, url);
+      if (!shouldUseNavigationLoader(link, url)) return;
+
       event.preventDefault();
-      const label = link.textContent?.trim() || "Loading workspace";
-      navigate(link.href, label);
+      navigate(link.href, label, { loader: true });
     });
   }
 
@@ -115,33 +149,104 @@
     return true;
   }
 
-  function navigate(href, label = "Loading workspace") {
+  function navigate(href, label = "ChemVault", options = {}) {
     if (isNavigating) return;
     isNavigating = true;
-    showNavigation(label);
+    const url = new URL(href, window.location.href);
+    const useLoader = options.loader ?? shouldUseNavigationLoader(null, url);
 
     const go = () => {
       window.location.href = href;
     };
 
-    if (reduceMotion.matches) {
+    if (reduceMotion.matches || !useLoader) {
       go();
       return;
     }
 
-    window.setTimeout(go, 220);
+    showNavigation(label || destinationLabel(null, url));
+    window.setTimeout(go, 90);
   }
 
-  function showNavigation(label = "Loading workspace") {
+  function showNavigation(label = "ChemVault") {
     ensureOverlay();
     const copy = overlay.querySelector(".page-transition__copy");
-    if (copy && label) copy.textContent = label.length > 34 ? "Loading workspace" : label;
+    if (copy && label) copy.textContent = trimLabel(label);
     document.body.classList.add("page-is-leaving");
+    overlay.setAttribute("aria-hidden", "false");
     overlay.classList.add("is-active");
   }
 
   function hideNavigation() {
     overlay?.classList.remove("is-active");
+    overlay?.setAttribute("aria-hidden", "true");
+  }
+
+  function shouldUseNavigationLoader(link, url) {
+    if (reduceMotion.matches) return false;
+    if (link?.dataset.transition === "none") return false;
+    if (link?.dataset.transition === "loading") return true;
+    if (isSlowConnection()) return true;
+    if (isSearchWork(url)) return true;
+    return isHeavyPage(url) && !hasVisited(url);
+  }
+
+  function isHeavyPage(url) {
+    return heavyPageNames.has(pageName(url));
+  }
+
+  function isSearchWork(url) {
+    return pageName(url) === "search.html" && Boolean(url.searchParams.get("q"));
+  }
+
+  function isSlowConnection() {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!connection || connection.saveData) return false;
+    return ["slow-2g", "2g", "3g"].includes(connection.effectiveType);
+  }
+
+  function destinationLabel(link, url) {
+    const text = trimLabel(link?.dataset.transitionLabel || link?.getAttribute("aria-label") || link?.textContent || "");
+    const pageLabel = pageLabels[pageName(url)] || "ChemVault";
+    if (!text || genericLabels.has(text.toLowerCase()) || text.toLowerCase().includes("chemvault home")) return pageLabel;
+    return text;
+  }
+
+  function trimLabel(value) {
+    const text = String(value || "").replace(/\s+/g, " ").trim();
+    return text.length > 32 ? `${text.slice(0, 29)}...` : text;
+  }
+
+  function pageName(url) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    return parts[parts.length - 1] || "index.html";
+  }
+
+  function pageVisitKey(url) {
+    return url.pathname.replace(/\/index\.html$/i, "/");
+  }
+
+  function readVisited() {
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(visitedKey) || "[]");
+      return Array.isArray(parsed) ? new Set(parsed) : new Set();
+    } catch {
+      return new Set();
+    }
+  }
+
+  function hasVisited(url) {
+    return readVisited().has(pageVisitKey(url));
+  }
+
+  function markVisited(url) {
+    try {
+      const visited = readVisited();
+      visited.add(pageVisitKey(url));
+      sessionStorage.setItem(visitedKey, JSON.stringify([...visited].slice(-32)));
+    } catch {
+      // Session storage can be unavailable in private contexts.
+    }
   }
 
   function wireReveal() {
