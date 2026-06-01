@@ -83,7 +83,7 @@
       panel.classList.add("active");
       panel.innerHTML = hits.length ? hits.map((hit) => `
         <a class="search-hit" href="${hit.href}"${hit.external ? ' target="_blank" rel="noreferrer"' : ""}>
-          <img src="${escapeHTML(thumbnailFor(hit))}" data-fallback-src="${escapeHTML(placeholderImage(hit.type, hit.title))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+          <img src="${escapeHTML(thumbnailFor(hit))}" data-fallback-src="${escapeHTML(placeholderImage(hit.type, hit.title, hit.formula || hit.family || hit.domain || ""))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
           <span>${escapeHTML(hit.type)}</span>
           <strong>${escapeHTML(hit.title)}</strong>
           <small>${escapeHTML(hit.body)}</small>
@@ -109,11 +109,23 @@
     footer.className = "site-footer";
     footer.innerHTML = `
       <div class="container footer-grid developer-footer-grid">
-        <div>
-          <strong>© 2026 ChemVault. All rights reserved.</strong>
-          <span>Contact: <a href="mailto:contact@chemvault.science">contact@chemvault.science</a></span>
+        <div class="footer-brand-block">
+          <a class="footer-brand" href="/index.html">
+            <span class="footer-brand-mark" aria-hidden="true"><img src="/assets/chemvault-logo-mark.png" alt="" /></span>
+            <span><strong>ChemVault</strong><small>Academic chemistry knowledge portal</small></span>
+          </a>
+          <p>ChemVault is for educational purposes only. Data may contain errors and double-checking is required.</p>
         </div>
-        <p>ChemVault is for educational purposes only. Data may contain errors; double-checking is required.</p>
+        <div class="footer-column">
+          <span class="footer-heading">Contact</span>
+          <a href="mailto:contact@chemvault.science">contact@chemvault.science</a>
+          <span>Created and maintained by Ziwen M.</span>
+        </div>
+        <div class="footer-column footer-legal">
+          <span class="footer-heading">Legal</span>
+          <span>© 2026 ChemVault</span>
+          <span>All rights reserved.</span>
+        </div>
       </div>
     `;
     if (version) version.before(footer);
@@ -177,26 +189,52 @@
 
   function thumbnailFor(hit) {
     if (hit.imageUrl) return hit.imageUrl;
+    const cid = pubChemCidFrom(hit);
+    if (cid && canUsePubChemName(hit.title)) {
+      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${encodeURIComponent(cid)}/PNG?record_type=2d&image_size=small`;
+    }
     const type = String(hit.type || "").toLowerCase();
     if ((type.includes("compound") || type.includes("reagent")) && canUsePubChemName(hit.title)) {
       return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(hit.title.replace(/^.*·\s*/, ""))}/PNG?record_type=2d&image_size=small`;
     }
-    return placeholderImage(hit.type, hit.title);
+    return placeholderImage(hit.type, hit.title, hit.formula || hit.family || hit.domain || "");
   }
 
   function canUsePubChemName(title) {
     const text = String(title || "").trim();
-    return Boolean(text) && !/\breference\b/i.test(text) && !/^syscat-/i.test(text);
+    return Boolean(text)
+      && !/\breference\b/i.test(text)
+      && !/\b(panel|system|class|mixture|solution|buffer|assay|test|screen|candidate|reaction)\b/i.test(text)
+      && !/^syscat-/i.test(text);
+  }
+
+  function pubChemCidFrom(hit = {}) {
+    const raw = hit.raw || {};
+    const cid = hit.cid || raw.cid || raw.CID;
+    if (cid) return cid;
+    const href = String(hit.sourceHref || raw.sourceHref || raw.href || raw.url || "");
+    const match = href.match(/pubchem\.ncbi\.nlm\.nih\.gov\/compound\/(\d+)/i);
+    return match?.[1] || "";
   }
 
   function placeholderImage(type, title, subtitle = "") {
-    const palette = String(type || "").toLowerCase().includes("material")
-      ? ["#f5f5f7", "#86868b", "#0071e3"]
-      : String(type || "").toLowerCase().includes("external") || String(type || "").toLowerCase().includes("source")
-        ? ["#f5f5f7", "#0071e3", "#86868b"]
-        : ["#f5f5f7", "#1d1d1f", "#0071e3"];
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240" viewBox="0 0 360 240"><rect width="360" height="240" fill="${palette[0]}"/><path d="M44 158 104 54l60 104H44Zm180-84h84v84h-84V74Zm-96 32h132" fill="none" stroke="${palette[1]}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".42"/><circle cx="104" cy="54" r="12" fill="${palette[2]}"/><circle cx="164" cy="158" r="12" fill="${palette[2]}"/><text x="24" y="34" fill="#1d1d1f" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="800">${svgEsc(type).slice(0, 24)}</text><text x="24" y="208" fill="#1d1d1f" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="900">${svgEsc(title).slice(0, 24)}</text><text x="24" y="228" fill="#6e6e73" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700">${svgEsc(subtitle).slice(0, 32)}</text></svg>`;
+    const palette = imagePalette(type);
+    const formula = imageFormula(subtitle);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240" viewBox="0 0 360 240" role="img" aria-label="${svgEsc(title)}"><rect width="360" height="240" fill="${palette.bg}"/><rect x="16" y="16" width="328" height="208" rx="18" fill="#fff" stroke="${palette.border}"/><text x="30" y="45" fill="${palette.accent}" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="800">${svgEsc(type).slice(0, 24)}</text><g transform="translate(45 68)" fill="none" stroke="${palette.line}" stroke-linecap="round" stroke-linejoin="round"><path d="M52 0 92 23v46l-40 23-40-23V23Z" stroke-width="6" opacity=".74"/><path d="M92 23h46M92 69h46M12 23l-30-18M12 69l-30 18" stroke-width="5" opacity=".46"/><circle cx="52" cy="0" r="10" fill="${palette.accent}" stroke="none"/><circle cx="92" cy="69" r="10" fill="${palette.accent2}" stroke="none"/></g><text x="210" y="100" fill="${palette.text}" font-family="SFMono-Regular,Menlo,Consolas,monospace" font-size="19" font-weight="800">${svgEsc(formula || "Chem").slice(0, 10)}</text><text x="30" y="198" fill="${palette.text}" font-family="Inter,Arial,sans-serif" font-size="21" font-weight="850">${svgEsc(title).slice(0, 24)}</text><text x="30" y="217" fill="${palette.muted}" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="650">${svgEsc(subtitle).slice(0, 32)}</text></svg>`;
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  }
+
+  function imagePalette(type) {
+    const key = String(type || "").toLowerCase();
+    if (key.includes("material")) return { bg: "#f5f5f7", border: "#d2d2d7", line: "#64748b", accent: "#0071e3", accent2: "#2bbbad", text: "#1d1d1f", muted: "#6e6e73" };
+    if (key.includes("external") || key.includes("source") || key.includes("article")) return { bg: "#f5f5f7", border: "#d2d2d7", line: "#52525b", accent: "#0071e3", accent2: "#f59e0b", text: "#1d1d1f", muted: "#6e6e73" };
+    return { bg: "#f5f5f7", border: "#d2d2d7", line: "#1d1d1f", accent: "#0071e3", accent2: "#2bbbad", text: "#1d1d1f", muted: "#6e6e73" };
+  }
+
+  function imageFormula(subtitle) {
+    const value = String(subtitle || "").split("·")[0].trim();
+    if (!value || value.length > 18) return "";
+    return /[A-Z][A-Za-z0-9()[\].+\-/ ]/.test(value) ? value : "";
   }
 
   function svgEsc(value) {

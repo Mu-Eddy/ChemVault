@@ -98,6 +98,10 @@
 
   function thumbnailFor(item) {
     if (item.imageUrl) return displayImageUrl(item.imageUrl);
+    const cid = pubChemCidFrom(item);
+    if (cid && canUsePubChemName(item.title)) {
+      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${encodeURIComponent(cid)}/PNG?record_type=2d&image_size=large`;
+    }
     const type = `${item.recordType || ""} ${item.type || ""}`.toLowerCase();
     if ((type.includes("compound") || type.includes("reagent")) && canUsePubChemName(item.title)) {
       return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(item.title)}/PNG?record_type=2d&image_size=large`;
@@ -107,7 +111,19 @@
 
   function canUsePubChemName(title) {
     const text = String(title || "").trim();
-    return Boolean(text) && !/\breference\b/i.test(text) && !/^syscat-/i.test(text);
+    return Boolean(text)
+      && !/\breference\b/i.test(text)
+      && !/\b(panel|system|class|mixture|solution|buffer|assay|test|screen|candidate|reaction)\b/i.test(text)
+      && !/^syscat-/i.test(text);
+  }
+
+  function pubChemCidFrom(item = {}) {
+    const raw = item.raw || {};
+    const cid = item.cid || raw.cid || raw.CID;
+    if (cid) return cid;
+    const href = String(item.sourceHref || raw.sourceHref || raw.href || raw.url || "");
+    const match = href.match(/pubchem\.ncbi\.nlm\.nih\.gov\/compound\/(\d+)/i);
+    return match?.[1] || "";
   }
 
   function displayImageUrl(url) {
@@ -115,13 +131,23 @@
   }
 
   function placeholderImage(type, title, subtitle = "") {
-    const palette = String(type || "").toLowerCase().includes("material")
-      ? ["#f5f5f7", "#86868b", "#0071e3"]
-      : String(type || "").toLowerCase().includes("article") || String(type || "").toLowerCase().includes("source")
-        ? ["#f5f5f7", "#0071e3", "#86868b"]
-        : ["#f5f5f7", "#1d1d1f", "#0071e3"];
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420"><rect width="640" height="420" fill="${palette[0]}"/><path d="M84 278 190 96l106 182H84Zm260-152h170v170H344V126Zm-174 44h276" fill="none" stroke="${palette[1]}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity=".42"/><circle cx="190" cy="96" r="20" fill="${palette[2]}"/><circle cx="296" cy="278" r="20" fill="${palette[2]}"/><circle cx="514" cy="126" r="18" fill="${palette[2]}"/><text x="42" y="58" fill="#1d1d1f" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="800">${svgEsc(type).slice(0, 34)}</text><text x="42" y="355" fill="#1d1d1f" font-family="Inter,Arial,sans-serif" font-size="36" font-weight="900">${svgEsc(title).slice(0, 28)}</text><text x="42" y="388" fill="#6e6e73" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700">${svgEsc(subtitle).slice(0, 42)}</text></svg>`;
+    const palette = imagePalette(type);
+    const formula = imageFormula(subtitle);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" role="img" aria-label="${svgEsc(title)}"><defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="${palette.bg}"/><stop offset="1" stop-color="${palette.bg2}"/></linearGradient></defs><rect width="640" height="420" fill="url(#bg)"/><rect x="28" y="28" width="584" height="364" rx="28" fill="#fff" stroke="${palette.border}"/><text x="54" y="76" fill="${palette.accent}" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="800">${svgEsc(type).slice(0, 34)}</text><g transform="translate(74 112)" fill="none" stroke="${palette.line}" stroke-linecap="round" stroke-linejoin="round"><path d="M104 0 184 46v92l-80 46-80-46V46Z" stroke-width="10" opacity=".74"/><path d="M184 46h82M184 138h82M24 46l-54-32M24 138l-54 32" stroke-width="8" opacity=".48"/><path d="M266 46 318 16M266 138l52 30" stroke-width="7" opacity=".38"/><circle cx="104" cy="0" r="18" fill="${palette.accent}" stroke="none"/><circle cx="184" cy="138" r="18" fill="${palette.accent2}" stroke="none"/><circle cx="318" cy="16" r="15" fill="${palette.accent}" stroke="none"/></g><text x="372" y="168" fill="${palette.text}" font-family="SFMono-Regular,Menlo,Consolas,monospace" font-size="36" font-weight="800">${svgEsc(formula || "Chem record").slice(0, 18)}</text><text x="372" y="206" fill="${palette.muted}" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700">curated preview</text><text x="54" y="338" fill="${palette.text}" font-family="Inter,Arial,sans-serif" font-size="34" font-weight="850">${svgEsc(title).slice(0, 30)}</text><text x="54" y="370" fill="${palette.muted}" font-family="Inter,Arial,sans-serif" font-size="19" font-weight="650">${svgEsc(subtitle).slice(0, 48)}</text></svg>`;
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  }
+
+  function imagePalette(type) {
+    const key = String(type || "").toLowerCase();
+    if (key.includes("material")) return { bg: "#f5f5f7", bg2: "#ecf6f4", border: "#d2d2d7", line: "#64748b", accent: "#0071e3", accent2: "#2bbbad", text: "#1d1d1f", muted: "#6e6e73" };
+    if (key.includes("article") || key.includes("source") || key.includes("pubmed")) return { bg: "#f5f5f7", bg2: "#fff7ed", border: "#d2d2d7", line: "#52525b", accent: "#0071e3", accent2: "#f59e0b", text: "#1d1d1f", muted: "#6e6e73" };
+    return { bg: "#f5f5f7", bg2: "#eef4ff", border: "#d2d2d7", line: "#1d1d1f", accent: "#0071e3", accent2: "#2bbbad", text: "#1d1d1f", muted: "#6e6e73" };
+  }
+
+  function imageFormula(subtitle) {
+    const value = String(subtitle || "").split("·")[0].trim();
+    if (!value || value.length > 28) return "";
+    return /[A-Z][A-Za-z0-9()[\].+\-/ ]/.test(value) ? value : "";
   }
 
   function svgEsc(value) {
@@ -407,7 +433,7 @@
 
   function academicResultItem(item) {
     const key = recordKey(item);
-    const fallback = placeholderImage(item.type, item.title, item.family || item.domain || item.formula || "");
+    const fallback = placeholderImage(item.type, item.title, item.formula || item.family || item.domain || "");
     const body = item.body || item.subtitle || "Checked academic metadata.";
     const tags = resultTags(item);
     const hazards = hazardLines(item);
@@ -939,7 +965,7 @@
 
   function academicRecordCard(record, index) {
     const image = thumbnailFor(toIndexRecord(record));
-    const fallback = placeholderImage(record.typeLabel || record.type, record.title, record.family || record.domain);
+    const fallback = placeholderImage(record.typeLabel || record.type, record.title, record.formula || record.family || record.domain);
     return `
       <article class="live-card live-card-imported">
         <div class="live-card-media">
@@ -1160,7 +1186,7 @@
       <div class="imported-record-list">
         ${records.slice(0, 8).map((record) => `
           <a href="${record.href}" target="_blank" rel="noreferrer">
-            <img src="${esc(record.imageUrl || placeholderImage(record.type, record.title))}" data-fallback-src="${esc(placeholderImage(record.type, record.title))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+            <img src="${esc(record.imageUrl || placeholderImage(record.type, record.title, record.formula || record.family || record.domain || ""))}" data-fallback-src="${esc(placeholderImage(record.type, record.title, record.formula || record.family || record.domain || ""))}" alt="" loading="lazy" referrerpolicy="no-referrer" />
             <span>${esc(record.type)}</span>
             <strong>${esc(record.title)}</strong>
           </a>

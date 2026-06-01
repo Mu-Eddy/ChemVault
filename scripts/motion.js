@@ -42,10 +42,12 @@
   ].join(",");
 
   let overlay;
+  let bootLoader;
   let revealObserver;
   let mutationObserver;
   let isNavigating = false;
   const visitedKey = "chemvault-visited-pages";
+  const startupKey = "chemvault-startup-loader-seen";
   const heavyPageNames = new Set(["app.html", "workbench.html", "search.html", "record.html"]);
   const genericLabels = new Set([
     "open page",
@@ -84,15 +86,24 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     document.documentElement.classList.add("motion-available");
+    const bootVisible = showStartupLoader();
     ensureOverlay();
     markVisited(new URL(window.location.href));
     wireNavigation();
     wireRipples();
     wireReveal();
-    requestAnimationFrame(() => {
+
+    const ready = () => {
       document.body.classList.add("page-ready");
+      hideStartupLoader();
       hideNavigation();
-    });
+    };
+
+    if (bootVisible) {
+      window.setTimeout(() => requestAnimationFrame(ready), 620);
+      return;
+    }
+    requestAnimationFrame(ready);
   });
 
   window.addEventListener("pageshow", () => {
@@ -180,6 +191,51 @@
   function hideNavigation() {
     overlay?.classList.remove("is-active");
     overlay?.setAttribute("aria-hidden", "true");
+  }
+
+  function showStartupLoader() {
+    if (reduceMotion.matches || hasSeenStartup()) return false;
+    markStartupSeen();
+    bootLoader = document.createElement("div");
+    bootLoader.className = "site-boot-loader";
+    bootLoader.setAttribute("role", "status");
+    bootLoader.setAttribute("aria-live", "polite");
+    bootLoader.innerHTML = `
+      <div class="site-boot-loader__panel">
+        <img class="site-boot-loader__logo" src="/assets/chemvault-logo-mark.png" alt="" decoding="async" />
+        <span class="site-boot-loader__label">${trimLabel(pageLabels[pageName(new URL(window.location.href))] || "ChemVault")}</span>
+        <span class="site-boot-loader__rail" aria-hidden="true"><span class="site-boot-loader__bar"></span></span>
+      </div>
+    `;
+    document.body.classList.add("site-is-booting");
+    document.body.appendChild(bootLoader);
+    return true;
+  }
+
+  function hideStartupLoader() {
+    if (!bootLoader) return;
+    bootLoader.classList.add("is-hidden");
+    document.body.classList.remove("site-is-booting");
+    window.setTimeout(() => {
+      bootLoader?.remove();
+      bootLoader = null;
+    }, 320);
+  }
+
+  function hasSeenStartup() {
+    try {
+      return sessionStorage.getItem(startupKey) === "true";
+    } catch {
+      return false;
+    }
+  }
+
+  function markStartupSeen() {
+    try {
+      sessionStorage.setItem(startupKey, "true");
+    } catch {
+      // Session storage can be unavailable in private contexts.
+    }
   }
 
   function shouldUseNavigationLoader(link, url) {

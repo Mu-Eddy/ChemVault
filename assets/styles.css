@@ -535,6 +535,80 @@ body.page-is-leaving .site-header {
   animation: chemvault-progress 1250ms var(--ease-out) forwards;
 }
 
+.site-boot-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(0, 113, 227, 0.12), transparent 34%),
+    rgba(245, 245, 247, 0.92);
+  backdrop-filter: blur(22px) saturate(150%);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 260ms ease, visibility 260ms ease;
+}
+
+.site-boot-loader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.site-boot-loader__panel {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(360px, calc(100vw - 48px));
+  color: var(--text);
+}
+
+.site-boot-loader__logo {
+  display: block;
+  width: 62px;
+  height: 62px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 8px;
+  box-shadow: 0 22px 48px rgba(0, 43, 84, 0.16);
+  animation: chemvault-boot-logo 820ms var(--ease-out) both;
+}
+
+.site-boot-loader__label {
+  margin-top: 2px;
+  color: var(--text);
+  font-size: 1.06rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.site-boot-loader__rail {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.site-boot-loader__bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #003c70, #0071e3, var(--amber));
+  transform: scaleX(0.1);
+  transform-origin: left center;
+  animation: chemvault-boot-progress 920ms var(--ease-out) forwards;
+}
+
+.site-is-booting {
+  cursor: progress;
+}
+
 .motion-ripple {
   position: absolute;
   z-index: 0;
@@ -574,6 +648,29 @@ body.page-is-leaving .site-header {
   }
 }
 
+@keyframes chemvault-boot-progress {
+  0% {
+    transform: scaleX(0.1);
+  }
+  46% {
+    transform: scaleX(0.68);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes chemvault-boot-logo {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes chemvault-ripple {
   100% {
     opacity: 0;
@@ -605,6 +702,10 @@ body.page-is-leaving .site-header {
   }
 
   .page-transition {
+    display: none;
+  }
+
+  .site-boot-loader {
     display: none;
   }
 }
@@ -1750,44 +1851,104 @@ td strong {
 }
 
 .site-footer {
-  border-top: 1px solid var(--line);
-  padding: 28px 0 34px;
-  background: color-mix(in srgb, var(--surface) 78%, var(--bg));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 48px 0 38px;
+  background: #111113;
+  color: #f5f5f7;
 }
 
 .footer-grid {
-  display: flex;
-  justify-content: space-between;
-  gap: 22px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.4fr) minmax(180px, 0.7fr) minmax(180px, 0.55fr);
+  gap: 34px;
+  align-items: start;
   text-align: left;
 }
 
 .developer-footer-grid {
-  align-items: center;
+  align-items: start;
 }
 
-.developer-footer-grid strong {
+.footer-brand-block {
+  display: grid;
+  gap: 16px;
+  max-width: 620px;
+}
+
+.footer-brand {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  width: fit-content;
+}
+
+.footer-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+}
+
+.footer-brand-mark img {
   display: block;
-  color: var(--text);
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.footer-brand strong {
+  display: block;
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1.15;
   margin: 0;
 }
 
-.developer-footer-grid span,
-.developer-footer-grid p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 0.86rem;
-  line-height: 1.45;
+.footer-brand small,
+.footer-brand-block p,
+.footer-column span {
+  color: rgba(245, 245, 247, 0.68);
 }
 
-.developer-footer-grid a {
-  color: var(--amber);
-  font-weight: 800;
+.footer-brand small {
+  display: block;
+  font-size: 0.82rem;
+  line-height: 1.3;
 }
 
-.developer-footer-grid p {
+.footer-brand-block p {
+  margin: 0;
   max-width: 560px;
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+
+.footer-column {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+
+.footer-heading {
+  color: rgba(245, 245, 247, 0.46) !important;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.footer-column a {
+  color: #ffffff;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.footer-legal span:not(.footer-heading) {
+  color: rgba(245, 245, 247, 0.78);
 }
 
 .site-version {
@@ -1948,8 +2109,12 @@ td strong {
   }
 
   .footer-grid {
-    flex-direction: column;
     align-items: flex-start;
+    gap: 26px;
+  }
+
+  .site-footer {
+    padding: 38px 0 32px;
   }
 
   .header-actions {

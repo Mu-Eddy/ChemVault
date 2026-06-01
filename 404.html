@@ -9,10 +9,10 @@
   <link rel="icon" href="/assets/favicon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/assets/styles.css?v=20260601d" />
-  <link rel="stylesheet" href="/assets/portal.css?v=20260601d" />
-  <script src="/scripts/motion.js?v=20260601d" defer></script>
-  <script src="/scripts/site-shell.js?v=20260601d" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=20260601e" />
+  <link rel="stylesheet" href="/assets/portal.css?v=20260601e" />
+  <script src="/scripts/motion.js?v=20260601e" defer></script>
+  <script src="/scripts/site-shell.js?v=20260601e" defer></script>
 </head>
 <body class="page-shell">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -60,11 +60,23 @@
   </main>
   <footer class="site-footer">
     <div class="container footer-grid developer-footer-grid">
-      <div>
-        <strong>© 2026 ChemVault. All rights reserved.</strong>
-        <span>Contact: <a href="mailto:contact@chemvault.science">contact@chemvault.science</a></span>
+      <div class="footer-brand-block">
+        <a class="footer-brand" href="index.html">
+          <span class="footer-brand-mark" aria-hidden="true"><img src="assets/chemvault-logo-mark.png" alt="" /></span>
+          <span><strong>ChemVault</strong><small>Academic chemistry knowledge portal</small></span>
+        </a>
+        <p>ChemVault is for educational purposes only. Data may contain errors and double-checking is required.</p>
       </div>
-      <p>ChemVault is for educational purposes only. Data may contain errors; double-checking is required.</p>
+      <div class="footer-column">
+        <span class="footer-heading">Contact</span>
+        <a href="mailto:contact@chemvault.science">contact@chemvault.science</a>
+        <span>Created and maintained by Ziwen M.</span>
+      </div>
+      <div class="footer-column footer-legal">
+        <span class="footer-heading">Legal</span>
+        <span>© 2026 ChemVault</span>
+        <span>All rights reserved.</span>
+      </div>
     </div>
   </footer>
   <div class="site-version">ChemVault v0.2.3</div>
