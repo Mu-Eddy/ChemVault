@@ -50,26 +50,39 @@
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState("");
     const [payload, setPayload] = React.useState(null);
+    const [dataSource, setDataSource] = React.useState("runtime");
     const [query, setQuery] = React.useState("");
     const [domain, setDomain] = React.useState("all");
     const [activeView, setActiveView] = React.useState("reaction-workbench");
     const [selectedRecord, setSelectedRecord] = React.useState(null);
 
     React.useEffect(() => {
+      const hydrate = (json, source) => {
+        setPayload(json);
+        setDataSource(source);
+        const params = new URLSearchParams(location.search);
+        setQuery(params.get("q") || "");
+        setDomain(params.get("domain") || "all");
+        setActiveView(params.get("view") || "reaction-workbench");
+        setLoading(false);
+      };
+
+      const runtimePayload = payloadFromRuntime();
+      if (runtimePayload) {
+        hydrate(runtimePayload, "runtime data bundle");
+        return;
+      }
+
       fetch("../data/chemvault-data.json?v=20260547")
         .then((response) => {
           if (!response.ok) throw new Error(`Dataset request failed with ${response.status}`);
           return response.json();
         })
-        .then((json) => {
-          setPayload(json);
-          const params = new URLSearchParams(location.search);
-          setQuery(params.get("q") || "");
-          setDomain(params.get("domain") || "all");
-          setActiveView(params.get("view") || "reaction-workbench");
-        })
-        .catch((err) => setError(err.message || "Unable to load JSON dataset."))
-        .finally(() => setLoading(false));
+        .then((json) => hydrate(json, "static JSON"))
+        .catch((err) => {
+          setError(err.message || "Unable to load chemistry dataset.");
+          setLoading(false);
+        });
     }, []);
 
     React.useEffect(() => {
@@ -164,8 +177,8 @@
           }, label)),
           h("section", { className: "react-data-panel", key: "json" }, [
             h("span", { className: "eyebrow", key: "eyebrow" }, "json status"),
-            h("h3", { key: "title" }, `JSON ${payload.version}`),
-            h("p", { key: "body" }, "Data is fetched from data/chemvault-data.json.")
+            h("h3", { key: "title" }, `Data ${payload.version}`),
+            h("p", { key: "body" }, `Loaded from ${dataSource}.`)
           ])
         ]),
         h(React.Fragment, { key: "active" }, activeComponent),
@@ -185,6 +198,23 @@
         ])
       ])
     ]);
+  }
+
+  function payloadFromRuntime() {
+    const chem = window.CHEMVAULT_DATA;
+    if (!chem?.reactionSystems && !chem?.compounds) return null;
+    return {
+      version: "0.2.3",
+      generatedAt: new Date().toISOString(),
+      chem,
+      research: window.CHEMVAULT_RESEARCH || {},
+      dossiers: window.CHEMVAULT_DOSSIERS || {},
+      methods: window.CHEMVAULT_METHODS || {},
+      spectroscopy: window.CHEMVAULT_SPECTROSCOPY || {},
+      materials: window.CHEMVAULT_MATERIALS || {},
+      external: window.CHEMVAULT_EXTERNAL || {},
+      workbench: window.CHEMVAULT_WORKBENCH || {}
+    };
   }
 
   ReactDOM.createRoot(document.getElementById("frameworkApp")).render(h(FrameworkApp));

@@ -1,9 +1,10 @@
 name = "chemvault"
 compatibility_date = "2026-05-29"
 
-# Cloudflare Pages configuration. Deploy with `wrangler pages deploy .`,
-# not `wrangler deploy`, because this project uses /functions.
-pages_build_output_dir = "."
+# Cloudflare Pages configuration. Deploy with `npm run deploy`.
+# The build step writes a trimmed Pages bundle to /dist so large D1 seed
+# artifacts and generated development data are not uploaded as static assets.
+pages_build_output_dir = "dist"
 
 [[d1_databases]]
 binding = "DB"

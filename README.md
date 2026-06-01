@@ -76,6 +76,8 @@ For local Pages Functions development:
 npm run dev
 ```
 
+`npm run dev` builds the lightweight Pages bundle in `dist/` first. Use `npm run dev:source` only when you intentionally want Wrangler to serve the repository root, including generated development artifacts.
+
 ## Deploy To Cloudflare Pages
 
 This project uses Cloudflare Pages Functions in the `functions/` directory, so deploy it as a Pages project.
@@ -86,13 +88,15 @@ Use this command for direct deploys:
 npm run deploy
 ```
 
+The deploy command runs `npm run build` and uploads `dist/`, not the repository root. The build step preserves runtime assets, Pages Functions, redirects and headers, while excluding generated deployment-unfriendly files such as `seed.sql` and `data/chemvault-data.json`. The React framework page hydrates from the already-loaded runtime data scripts, so the large JSON export is no longer required in the Pages bundle.
+
 In the Cloudflare dashboard, use these settings:
 
 - Project type: Pages, not Workers.
 - Production branch: `main`.
 - Framework preset: None.
-- Build command: leave blank.
-- Build output directory: `.`
+- Build command: `npm run build`
+- Build output directory: `dist`
 
 Do not use `wrangler deploy` for this repo. That command deploys a Worker and expects Workers Static Assets configuration such as `[assets] directory = "./dist"`, which does not apply to Pages Functions.
 
@@ -123,5 +127,6 @@ Then upload the resulting `sitemap.xml` URL from the same verified domain in Goo
 - `seed.sql` full 10000-record ChemVault seed.
 - `wrangler.toml` Pages and D1 binding configuration.
 - `scripts/api.js` frontend API client with browser fallback.
+- `scripts/build-pages.mjs` lightweight Cloudflare Pages bundle builder.
 - `scripts/generate-sitemap.mjs` sitemap generator for static pages and record-detail URLs.
 - `data/local-catalog-10000.js` systematic local catalog expander.
