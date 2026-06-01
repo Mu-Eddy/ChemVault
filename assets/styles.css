@@ -98,27 +98,18 @@ html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready)::before {
 }
 
 html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready)::after {
-  content: attr(data-boot-label);
+  content: "";
   position: fixed;
   left: 50%;
   top: 50%;
   z-index: 1101;
   display: block;
-  width: min(284px, calc(100vw - 44px));
-  min-height: 124px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 14px;
+  width: 104px;
+  height: 70px;
   background:
-    url("/assets/chemvault-logo-mark.png") center 16px / 48px 48px no-repeat,
-    linear-gradient(90deg, #003c70, #0071e3, var(--amber)) left calc(100% - 9px) / 12% 4px no-repeat,
-    #ffffff;
-  box-shadow: 0 18px 42px rgba(0, 43, 84, 0.14);
-  color: var(--text);
-  font-size: 0.95rem;
-  font-weight: 900;
-  line-height: 1.2;
-  padding: 74px 18px 24px;
-  text-align: center;
+    url("/assets/chemvault-logo-mark.png") center top / 48px 48px no-repeat,
+    linear-gradient(90deg, #003c70, #0071e3, var(--amber)) left bottom / 12% 3px no-repeat;
+  filter: drop-shadow(0 12px 28px rgba(0, 43, 84, 0.16));
   transform: translate(-50%, -50%) scale(0.98);
   animation:
     chemvault-boot-card 620ms var(--ease-out) both,
@@ -753,13 +744,13 @@ body.page-is-leaving .site-header {
 
 @keyframes chemvault-boot-rail {
   0% {
-    background-size: 48px 48px, 12% 4px, 100% 100%;
+    background-size: 48px 48px, 12% 3px;
   }
   58% {
-    background-size: 48px 48px, 74% 4px, 100% 100%;
+    background-size: 48px 48px, 74% 3px;
   }
   100% {
-    background-size: 48px 48px, 100% 4px, 100% 100%;
+    background-size: 48px 48px, 100% 3px;
   }
 }
 
