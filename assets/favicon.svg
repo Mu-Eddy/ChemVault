@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
-  <rect width="96" height="96" rx="14" fill="#080a0a"/>
-  <path d="M19 65V31h20v8H29v18h10v8H19Zm36 0L41 31h10l8 22 8-22h10L63 65h-8Z" fill="#e8bc55"/>
-  <path d="M20 76h56M20 20h56" stroke="#52c7b8" stroke-width="4" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="ChemVault">
+  <rect width="96" height="96" rx="20" fill="#ffffff"/>
+  <path d="M70 24 48 11 20 27v42l28 16 22-13V58L48 71 32 62V35l16-10 22 13V24Z" fill="#285a86"/>
+  <path d="M70 42 83 34v21l-13 8V42Z" fill="#285a86"/>
 </svg>

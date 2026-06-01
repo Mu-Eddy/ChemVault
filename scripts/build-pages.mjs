@@ -11,6 +11,7 @@ const entries = [
   "_redirects",
   "assets",
   "data",
+  "favicon.ico",
   "index.html",
   "pages",
   "robots.txt",

@@ -74,12 +74,61 @@ body.light-mode {
   background: var(--bg);
 }
 
-html.motion-available body:not(.page-ready) main {
-  opacity: 0;
-  transform: translateY(10px);
+html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready) {
+  overflow: hidden;
 }
 
-body.page-ready main {
+html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready) .site-header,
+html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready) main,
+html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready) .site-footer,
+html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready) .site-version {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(0, 113, 227, 0.12), transparent 34%),
+    rgba(245, 245, 247, 0.94);
+  backdrop-filter: blur(22px) saturate(150%);
+}
+
+html.motion-boot:not(.motion-boot-timeout) body:not(.page-ready)::after {
+  content: attr(data-boot-label);
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 1101;
+  display: block;
+  width: min(360px, calc(100vw - 48px));
+  min-height: 154px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 18px;
+  background:
+    url("/assets/chemvault-logo-mark.png") center 18px / 62px 62px no-repeat,
+    linear-gradient(90deg, #003c70, #0071e3, var(--amber)) left calc(100% - 10px) / 10% 5px no-repeat,
+    #ffffff;
+  box-shadow: 0 26px 64px rgba(0, 43, 84, 0.16);
+  color: var(--text);
+  font-size: 1.06rem;
+  font-weight: 900;
+  line-height: 1.2;
+  padding: 98px 24px 30px;
+  text-align: center;
+  transform: translate(-50%, -50%) scale(0.98);
+  animation:
+    chemvault-boot-card 620ms var(--ease-out) both,
+    chemvault-boot-rail 920ms var(--ease-out) forwards;
+}
+
+html.motion-available body.page-ready .site-header,
+html.motion-available body.page-ready main,
+html.motion-available body.page-ready .site-footer,
+html.motion-available body.page-ready .site-version {
   opacity: 1;
   transform: translateY(0);
   transition: opacity var(--motion-medium) var(--ease-out), transform var(--motion-medium) var(--ease-out);
@@ -660,6 +709,29 @@ body.page-is-leaving .site-header {
   }
 }
 
+@keyframes chemvault-boot-card {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px)) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes chemvault-boot-rail {
+  0% {
+    background-size: 62px 62px, 10% 5px, 100% 100%;
+  }
+  58% {
+    background-size: 62px 62px, 74% 5px, 100% 100%;
+  }
+  100% {
+    background-size: 62px 62px, 100% 5px, 100% 100%;
+  }
+}
+
 @keyframes chemvault-boot-logo {
   from {
     opacity: 0;
@@ -706,6 +778,11 @@ body.page-is-leaving .site-header {
   }
 
   .site-boot-loader {
+    display: none;
+  }
+
+  html.motion-boot body:not(.page-ready)::before,
+  html.motion-boot body:not(.page-ready)::after {
     display: none;
   }
 }

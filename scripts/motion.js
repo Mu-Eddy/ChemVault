@@ -42,7 +42,6 @@
   ].join(",");
 
   let overlay;
-  let bootLoader;
   let revealObserver;
   let mutationObserver;
   let isNavigating = false;
@@ -94,8 +93,8 @@
     wireReveal();
 
     const ready = () => {
+      finishStartupLoader();
       document.body.classList.add("page-ready");
-      hideStartupLoader();
       hideNavigation();
     };
 
@@ -196,30 +195,18 @@
   function showStartupLoader() {
     if (reduceMotion.matches || hasSeenStartup()) return false;
     markStartupSeen();
-    bootLoader = document.createElement("div");
-    bootLoader.className = "site-boot-loader";
-    bootLoader.setAttribute("role", "status");
-    bootLoader.setAttribute("aria-live", "polite");
-    bootLoader.innerHTML = `
-      <div class="site-boot-loader__panel">
-        <img class="site-boot-loader__logo" src="/assets/chemvault-logo-mark.png" alt="" decoding="async" />
-        <span class="site-boot-loader__label">${trimLabel(pageLabels[pageName(new URL(window.location.href))] || "ChemVault")}</span>
-        <span class="site-boot-loader__rail" aria-hidden="true"><span class="site-boot-loader__bar"></span></span>
-      </div>
-    `;
+    document.body.dataset.bootLabel = trimLabel(document.body.dataset.bootLabel || pageLabels[pageName(new URL(window.location.href))] || "ChemVault");
     document.body.classList.add("site-is-booting");
-    document.body.appendChild(bootLoader);
     return true;
   }
 
-  function hideStartupLoader() {
-    if (!bootLoader) return;
-    bootLoader.classList.add("is-hidden");
+  function finishStartupLoader() {
+    if (window.CHEMVAULT_BOOT_TIMEOUT) {
+      window.clearTimeout(window.CHEMVAULT_BOOT_TIMEOUT);
+      window.CHEMVAULT_BOOT_TIMEOUT = null;
+    }
+    document.documentElement.classList.remove("motion-boot-timeout");
     document.body.classList.remove("site-is-booting");
-    window.setTimeout(() => {
-      bootLoader?.remove();
-      bootLoader = null;
-    }, 320);
   }
 
   function hasSeenStartup() {
