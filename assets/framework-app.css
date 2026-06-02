@@ -11,7 +11,7 @@
 
 .framework-app {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .framework-control-deck,
@@ -84,7 +84,7 @@
 
 .react-metric-strip {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
 }
 
@@ -116,7 +116,7 @@
 
 .framework-main-grid {
   width: min(1540px, 100%);
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
 }
 
@@ -128,22 +128,27 @@
 }
 
 .framework-nav-panel {
-  position: sticky;
-  top: 78px;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  align-items: stretch;
+}
+
+.framework-nav-panel > .eyebrow,
+.framework-nav-panel > .react-data-panel {
+  grid-column: 1 / -1;
 }
 
 .framework-inspector-panel {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 .framework-nav-panel button {
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
-  text-align: left;
+  text-align: center;
   padding: 10px;
   font-weight: 850;
   transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
@@ -163,7 +168,7 @@
 }
 
 .react-view-grid {
-  grid-template-columns: 280px minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(220px, 240px);
   align-items: start;
 }
 
@@ -418,6 +423,16 @@
     grid-template-columns: 230px minmax(0, 1fr) 270px;
   }
 
+  .framework-nav-panel {
+    position: sticky;
+    top: 78px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .framework-nav-panel button {
+    text-align: left;
+  }
+
   .framework-inspector-panel {
     grid-column: auto;
     position: sticky;
@@ -430,9 +445,8 @@
 }
 
 @media (max-width: 1200px) {
-  .framework-main-grid,
   .react-view-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
   }
 
   .framework-nav-panel,
@@ -443,18 +457,42 @@
   .framework-inspector-panel {
     grid-column: auto;
   }
+
+  .react-side-stack {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
   .framework-search-row,
-  .react-metric-strip,
+  .react-view-grid,
   .react-evidence-grid,
   .react-argument-grid {
     grid-template-columns: 1fr;
   }
 
+  .framework-nav-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .framework-nav-panel > .eyebrow,
+  .framework-nav-panel > .react-data-panel {
+    grid-column: 1 / -1;
+  }
+
+  .react-metric-strip {
+    grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+  }
+
   .react-record-header {
     display: grid;
+  }
+}
+
+@media (max-width: 360px) {
+  .framework-nav-panel {
+    grid-template-columns: 1fr;
   }
 }
 
