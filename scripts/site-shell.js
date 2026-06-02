@@ -119,9 +119,13 @@
   function applyTheme(theme) {
     const mode = theme === "dark" ? "dark" : "light";
     const dark = mode === "dark";
+    document.documentElement.classList.toggle("dark-mode", dark);
+    document.documentElement.classList.toggle("light-mode", !dark);
+    document.documentElement.style.colorScheme = mode;
     document.body.classList.toggle("dark-mode", dark);
     document.body.classList.toggle("light-mode", !dark);
     localStorage.setItem("chemvault-theme", mode);
+    document.querySelector("meta[name='theme-color']")?.setAttribute("content", dark ? "#101114" : "#f5f5f7");
     document.querySelectorAll("[data-shell-action='theme']").forEach((button) => {
       button.dataset.themeState = mode;
       button.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");

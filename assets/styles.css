@@ -2214,22 +2214,29 @@ td strong {
 
 @media (max-width: 1320px) {
   .nav-shell {
-    grid-template-columns: auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
   .menu-toggle {
     display: block;
+    grid-column: 3;
     justify-self: end;
   }
 
-  .site-nav,
-  .header-actions {
+  .site-nav {
     display: none;
     grid-column: 1 / -1;
   }
 
-  .site-header.nav-open .site-nav,
-  .site-header.nav-open .header-actions {
+  .header-actions {
+    display: grid;
+    grid-column: 2;
+    grid-template-columns: minmax(112px, min(360px, 45vw)) auto;
+    justify-self: end;
+    min-width: 0;
+  }
+
+  .site-header.nav-open .site-nav {
     display: grid;
   }
 
@@ -2433,4 +2440,187 @@ body.dark-mode .site-nav a[aria-current] {
 
 .section-tint {
   background: #fbfbfd;
+}
+
+/* Dark theme parity for shell and shared surfaces that have final light overrides. */
+html.dark-mode {
+  color-scheme: dark;
+  --bg: #101114;
+  --bg-2: #15171b;
+  --surface: #191b20;
+  --surface-2: #1f2228;
+  --surface-3: #252932;
+  --text: #f5f5f7;
+  --muted: #a8adb7;
+  --line: rgba(255, 255, 255, 0.13);
+  --strong-line: rgba(255, 255, 255, 0.28);
+  --shadow: 0 18px 54px rgba(0, 0, 0, 0.34);
+}
+
+body.dark-mode,
+html.dark-mode body {
+  background: #101114;
+  color: #f5f5f7;
+}
+
+body.dark-mode .site-header,
+html.dark-mode body .site-header {
+  background: rgba(18, 19, 23, 0.9);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode :where(.brand-mark, .search-shell, .theme-toggle, .site-nav a),
+html.dark-mode body :where(.brand-mark, .search-shell, .theme-toggle, .site-nav a) {
+  background: rgba(25, 27, 32, 0.84);
+  border-color: rgba(255, 255, 255, 0.13);
+  color: #f5f5f7;
+}
+
+body.dark-mode :where(.search-shell:focus-within, .search-shell.is-expanded, .theme-toggle:hover, .theme-toggle:focus-visible),
+html.dark-mode body :where(.search-shell:focus-within, .search-shell.is-expanded, .theme-toggle:hover, .theme-toggle:focus-visible) {
+  background: #1f2228;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+body.dark-mode .search-shell input,
+html.dark-mode body .search-shell input {
+  color: #f5f5f7;
+}
+
+body.dark-mode .search-shell input::placeholder,
+html.dark-mode body .search-shell input::placeholder {
+  color: rgba(245, 245, 247, 0.58);
+}
+
+body.dark-mode .site-nav a[aria-current],
+html.dark-mode body .site-nav a[aria-current] {
+  background: rgba(0, 113, 227, 0.18);
+  color: #f5f5f7;
+}
+
+body.dark-mode :where(.home-hero, .workspace-hero, .page-hero, .section, .section-tint),
+html.dark-mode body :where(.home-hero, .workspace-hero, .page-hero, .section, .section-tint) {
+  background: #101114;
+}
+
+body.dark-mode :where(.home-hero, .page-hero),
+html.dark-mode body :where(.home-hero, .page-hero) {
+  background: linear-gradient(180deg, #15171b 0%, #101114 100%);
+}
+
+body.dark-mode :where(.home-hero-copy h1, .page-hero h1, h1, h2, h3, strong),
+html.dark-mode body :where(.home-hero-copy h1, .page-hero h1, h1, h2, h3, strong) {
+  color: #f5f5f7;
+}
+
+body.dark-mode :where(.lead, .page-hero p, .section-heading p, .portal-card p, .record-lead, .live-card p, .search-note p, .muted, small),
+html.dark-mode body :where(.lead, .page-hero p, .section-heading p, .portal-card p, .record-lead, .live-card p, .search-note p, .muted, small) {
+  color: #a8adb7;
+}
+
+body.dark-mode :where(
+  .home-status-panel,
+  .home-search-card,
+  .home-metric-grid > div,
+  .home-quick-card,
+  .portal-card,
+  .portal-card-featured,
+  .page-index-card,
+  .data-window,
+  .detail-card,
+  .compare-card,
+  .table-card,
+  .calculator-shell,
+  .calc-panel,
+  .quiz-card,
+  .notes-panel,
+  .safety-section,
+  .source-card,
+  .method-card,
+  .metric-strip > div,
+  .command-grid > div,
+  .source-strip > div,
+  .element-grid > div,
+  .search-results,
+  .search-hit,
+  .graph-board,
+  .network-board,
+  .spectrum-window,
+  #moleculeCanvas
+),
+html.dark-mode body :where(
+  .home-status-panel,
+  .home-search-card,
+  .home-metric-grid > div,
+  .home-quick-card,
+  .portal-card,
+  .portal-card-featured,
+  .page-index-card,
+  .data-window,
+  .detail-card,
+  .compare-card,
+  .table-card,
+  .calculator-shell,
+  .calc-panel,
+  .quiz-card,
+  .notes-panel,
+  .safety-section,
+  .source-card,
+  .method-card,
+  .metric-strip > div,
+  .command-grid > div,
+  .source-strip > div,
+  .element-grid > div,
+  .search-results,
+  .search-hit,
+  .graph-board,
+  .network-board,
+  .spectrum-window,
+  #moleculeCanvas
+) {
+  background: #191b20;
+  border-color: rgba(255, 255, 255, 0.13);
+  color: #f5f5f7;
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.32);
+}
+
+body.dark-mode :where(.portal-card-featured, .nih-import-panel),
+html.dark-mode body :where(.portal-card-featured, .nih-import-panel) {
+  background: linear-gradient(180deg, rgba(0, 113, 227, 0.16), rgba(25, 27, 32, 0.96));
+  border-color: rgba(0, 113, 227, 0.32);
+}
+
+body.dark-mode :where(.search-hit:hover, .search-hit:focus-visible, .secondary-button:hover, .small-button:hover, .text-button:hover, .segmented button:hover, .calculator-tabs button:hover),
+html.dark-mode body :where(.search-hit:hover, .search-hit:focus-visible, .secondary-button:hover, .small-button:hover, .text-button:hover, .segmented button:hover, .calculator-tabs button:hover) {
+  background: #252932;
+}
+
+body.dark-mode :where(input, select, textarea),
+html.dark-mode body :where(input, select, textarea) {
+  background: #15171b;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #f5f5f7;
+}
+
+body.dark-mode :where(input, textarea)::placeholder,
+html.dark-mode body :where(input, textarea)::placeholder {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+body.dark-mode :where(.secondary-button, .text-button, .tag, .source-card span, .method-card span),
+html.dark-mode body :where(.secondary-button, .text-button, .tag, .source-card span, .method-card span) {
+  border-color: rgba(0, 113, 227, 0.34);
+  background: rgba(0, 113, 227, 0.12);
+  color: #66aaff;
+}
+
+body.dark-mode :where(.result-thumb, .live-card-media, .imported-record-list img, .home-quick-card img),
+html.dark-mode body :where(.result-thumb, .live-card-media, .imported-record-list img, .home-quick-card img) {
+  background: #252932;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+body.dark-mode #moleculeCanvas,
+html.dark-mode body #moleculeCanvas {
+  background: #191b20;
 }
