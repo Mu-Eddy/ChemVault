@@ -31,7 +31,10 @@
     applyTheme(savedTheme || (prefersDark ? "dark" : "light"));
     document.querySelectorAll("[data-shell-action='theme'], [data-home-action='theme']").forEach((button) => {
       button.addEventListener("click", () => {
-        applyTheme(document.body.classList.contains("dark-mode") ? "light" : "dark");
+        startThemeTransition(button);
+        window.requestAnimationFrame(() => {
+          applyTheme(document.body.classList.contains("dark-mode") ? "light" : "dark");
+        });
       });
     });
 
@@ -58,6 +61,21 @@
       button.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
       button.setAttribute("title", dark ? "Light theme" : "Dark theme");
     });
+  }
+
+  function startThemeTransition(source) {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const root = document.documentElement;
+    const rect = source?.getBoundingClientRect?.();
+    root.style.setProperty("--theme-x", rect ? `${rect.left + rect.width / 2}px` : "50%");
+    root.style.setProperty("--theme-y", rect ? `${rect.top + rect.height / 2}px` : "50%");
+    root.classList.remove("theme-switching");
+    void root.offsetWidth;
+    root.classList.add("theme-switching");
+    window.clearTimeout(window.CHEMVAULT_THEME_TIMER);
+    window.CHEMVAULT_THEME_TIMER = window.setTimeout(() => {
+      root.classList.remove("theme-switching");
+    }, 620);
   }
 
   function normalisePath(pathname) {
