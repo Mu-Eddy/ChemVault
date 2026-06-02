@@ -18,11 +18,13 @@
   }
 
   function wireShellTheme() {
-    document.body.classList.add("light-mode");
-    localStorage.setItem("chemvault-theme", "light");
-    document.querySelector("[data-shell-action='theme']")?.addEventListener("click", () => {
-      document.body.classList.add("light-mode");
-      localStorage.setItem("chemvault-theme", "light");
+    const savedTheme = localStorage.getItem("chemvault-theme");
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    applyTheme(savedTheme || (prefersDark ? "dark" : "light"));
+    document.querySelectorAll("[data-shell-action='theme']").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyTheme(document.body.classList.contains("dark-mode") ? "light" : "dark");
+      });
     });
   }
 
@@ -30,7 +32,18 @@
     const input = document.querySelector("#shellSearch");
     const panel = document.querySelector("#shellSearchResults");
     if (!input || !panel) return;
+    const shell = input.closest(".search-shell");
+    const syncShell = () => {
+      const hasValue = Boolean(input.value.trim());
+      shell?.classList.toggle("has-value", hasValue);
+      shell?.classList.toggle("is-expanded", hasValue || document.activeElement === input);
+    };
+    input.addEventListener("focus", syncShell);
+    input.addEventListener("blur", () => {
+      window.setTimeout(syncShell, 120);
+    });
     input.addEventListener("input", () => {
+      syncShell();
       const rawQuery = input.value.trim();
       const query = normalise(rawQuery);
       if (!query) {
@@ -91,15 +104,36 @@
       `).join("") : `<div class="empty-state">No matching academic record.</div>`;
       wireImageFallbacks(panel);
     });
+    syncShell();
   }
 
   function markActivePage() {
-    const current = location.pathname.split("/").pop() || "index.html";
+    const current = normalisePath(location.pathname);
     document.querySelectorAll(".site-nav a").forEach((link) => {
-      const href = link.getAttribute("href") || "";
-      const file = href.split("/").pop() || "index.html";
-      link.toggleAttribute("aria-current", file === current);
+      const target = normalisePath(new URL(link.getAttribute("href") || "", location.href).pathname);
+      if (target === current) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
     });
+  }
+
+  function applyTheme(theme) {
+    const mode = theme === "dark" ? "dark" : "light";
+    const dark = mode === "dark";
+    document.body.classList.toggle("dark-mode", dark);
+    document.body.classList.toggle("light-mode", !dark);
+    localStorage.setItem("chemvault-theme", mode);
+    document.querySelectorAll("[data-shell-action='theme']").forEach((button) => {
+      button.dataset.themeState = mode;
+      button.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+      button.setAttribute("title", dark ? "Light theme" : "Dark theme");
+    });
+  }
+
+  function normalisePath(pathname) {
+    let path = String(pathname || "").replace(/\/+$/, "");
+    if (!path || path === "/") return "index";
+    const file = path.split("/").pop() || "index";
+    return file.replace(/\.html$/i, "") || "index";
   }
 
   function ensureDeveloperFooter() {

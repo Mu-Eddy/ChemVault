@@ -2007,3 +2007,40 @@ body.light-mode {
     grid-template-columns: 1fr;
   }
 }
+
+body.dark-mode.page-shell,
+body.dark-mode.page-shell .page-hero,
+body.dark-mode.page-shell .section,
+body.dark-mode.page-shell .section-tint,
+body.dark-mode.page-shell .search-studio-section {
+  background: #101114;
+  color: #f5f5f7;
+}
+
+body.dark-mode.page-shell .page-hero {
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, #15171b 0%, #101114 100%);
+}
+
+body.dark-mode.page-shell .page-panel,
+body.dark-mode.page-shell .result-panel,
+body.dark-mode.page-shell .page-index-card,
+body.dark-mode.page-shell .portal-card,
+body.dark-mode.page-shell .data-window,
+body.dark-mode.page-shell .detail-card,
+body.dark-mode.page-shell .compare-card,
+body.dark-mode.page-shell .table-card,
+body.dark-mode.page-shell .search-control-panel,
+body.dark-mode.page-shell .academic-result-item,
+body.dark-mode.page-shell .record-hero-card {
+  background: #191b20;
+  border-color: rgba(255, 255, 255, 0.13);
+  color: #f5f5f7;
+}
+
+body.dark-mode.page-shell .page-panel p,
+body.dark-mode.page-shell .page-index-card,
+body.dark-mode.page-shell .academic-result-item p,
+body.dark-mode.page-shell .academic-result-item small {
+  color: #a8adb7;
+}
