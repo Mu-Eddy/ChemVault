@@ -1,9 +1,20 @@
 (() => {
+  const themeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+
+  function normaliseTheme(value) {
+    return ["system", "light", "dark"].includes(value) ? value : "system";
+  }
+
+  function resolveTheme(setting) {
+    return setting === "system" ? (themeQuery?.matches ? "dark" : "light") : setting;
+  }
+
   function applyInitialTheme() {
-    const saved = localStorage.getItem("chemvault-theme");
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-    const mode = saved === "dark" || (!saved && prefersDark) ? "dark" : "light";
+    const setting = normaliseTheme(localStorage.getItem("chemvault-theme"));
+    const mode = resolveTheme(setting);
     const dark = mode === "dark";
+    document.documentElement.dataset.themeSetting = setting;
+    document.documentElement.dataset.themeResolved = mode;
     document.documentElement.classList.toggle("dark-mode", dark);
     document.documentElement.classList.toggle("light-mode", !dark);
     document.documentElement.style.colorScheme = mode;
@@ -21,7 +32,10 @@
     applyInitialTheme();
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const suppress = sessionStorage.getItem("chemvault-suppress-next-boot") === "true";
-    if (suppress) sessionStorage.removeItem("chemvault-suppress-next-boot");
+    if (suppress) {
+      sessionStorage.removeItem("chemvault-suppress-next-boot");
+      if (!reduce) document.documentElement.classList.add("motion-soft-enter");
+    }
     if (!reduce && !suppress) boot();
   } catch {
     boot();

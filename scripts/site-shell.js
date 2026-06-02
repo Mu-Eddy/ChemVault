@@ -1,4 +1,6 @@
 (function () {
+  const themeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+
   document.addEventListener("DOMContentLoaded", () => {
     wireShellNav();
     wireShellTheme();
@@ -18,15 +20,15 @@
   }
 
   function wireShellTheme() {
-    const savedTheme = localStorage.getItem("chemvault-theme");
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-    applyTheme(savedTheme || (prefersDark ? "dark" : "light"));
+    applyTheme(readThemeSetting());
+    themeQuery?.addEventListener?.("change", () => {
+      if (readThemeSetting() === "system") applyTheme("system", { persist: false });
+    });
     document.querySelectorAll("[data-shell-action='theme']").forEach((button) => {
       button.addEventListener("click", () => {
-        startThemeTransition(button);
-        window.requestAnimationFrame(() => {
-          applyTheme(document.body.classList.contains("dark-mode") ? "light" : "dark");
-        });
+        const next = nextThemeSetting(button.dataset.themeState || readThemeSetting());
+        startThemeTransition(button, next);
+        scheduleThemeApply(next);
       });
     });
   }
@@ -119,29 +121,35 @@
     });
   }
 
-  function applyTheme(theme) {
-    const mode = theme === "dark" ? "dark" : "light";
+  function applyTheme(theme, options = {}) {
+    const setting = normaliseTheme(theme);
+    const mode = resolveTheme(setting);
     const dark = mode === "dark";
+    document.documentElement.dataset.themeSetting = setting;
+    document.documentElement.dataset.themeResolved = mode;
     document.documentElement.classList.toggle("dark-mode", dark);
     document.documentElement.classList.toggle("light-mode", !dark);
     document.documentElement.style.colorScheme = mode;
     document.body.classList.toggle("dark-mode", dark);
     document.body.classList.toggle("light-mode", !dark);
-    localStorage.setItem("chemvault-theme", mode);
+    if (options.persist !== false) localStorage.setItem("chemvault-theme", setting);
     document.querySelector("meta[name='theme-color']")?.setAttribute("content", dark ? "#101114" : "#f5f5f7");
     document.querySelectorAll("[data-shell-action='theme']").forEach((button) => {
-      button.dataset.themeState = mode;
-      button.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
-      button.setAttribute("title", dark ? "Light theme" : "Dark theme");
+      button.dataset.themeState = setting;
+      button.dataset.themeResolved = mode;
+      button.setAttribute("aria-label", themeLabel(setting, mode));
+      button.setAttribute("title", themeTitle(setting, mode));
     });
   }
 
-  function startThemeTransition(source) {
+  function startThemeTransition(source, targetTheme) {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const root = document.documentElement;
     const rect = source?.getBoundingClientRect?.();
+    const targetMode = resolveTheme(normaliseTheme(targetTheme));
     root.style.setProperty("--theme-x", rect ? `${rect.left + rect.width / 2}px` : "50%");
     root.style.setProperty("--theme-y", rect ? `${rect.top + rect.height / 2}px` : "50%");
+    root.dataset.themeTarget = targetMode;
     root.classList.remove("theme-switching");
     void root.offsetWidth;
     root.classList.add("theme-switching");
@@ -149,6 +157,46 @@
     window.CHEMVAULT_THEME_TIMER = window.setTimeout(() => {
       root.classList.remove("theme-switching");
     }, 620);
+  }
+
+  function scheduleThemeApply(theme) {
+    let applied = false;
+    const apply = () => {
+      if (applied) return;
+      applied = true;
+      applyTheme(theme);
+    };
+    window.requestAnimationFrame?.(apply);
+    window.setTimeout(apply, 32);
+  }
+
+  function readThemeSetting() {
+    return normaliseTheme(localStorage.getItem("chemvault-theme"));
+  }
+
+  function normaliseTheme(value) {
+    return ["system", "light", "dark"].includes(value) ? value : "system";
+  }
+
+  function resolveTheme(setting) {
+    return setting === "system" ? (themeQuery?.matches ? "dark" : "light") : setting;
+  }
+
+  function nextThemeSetting(setting) {
+    const normalised = normaliseTheme(setting);
+    if (normalised === "system") return resolveTheme("system") === "dark" ? "light" : "dark";
+    return normalised === "light" ? "dark" : "system";
+  }
+
+  function themeLabel(setting, mode) {
+    if (setting === "system") return `System theme, currently ${mode}. Switch to ${mode === "dark" ? "light" : "dark"} theme`;
+    if (setting === "light") return "Light theme. Switch to dark theme";
+    return "Dark theme. Switch to system theme";
+  }
+
+  function themeTitle(setting, mode) {
+    if (setting === "system") return `System theme (${mode})`;
+    return setting === "light" ? "Light theme" : "Dark theme";
   }
 
   function normalisePath(pathname) {

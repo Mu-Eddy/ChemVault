@@ -92,23 +92,28 @@
     wireRipples();
     wireReveal();
 
+    let didReady = false;
     const ready = () => {
+      if (didReady) return;
+      didReady = true;
       finishStartupLoader();
       document.body.classList.add("page-ready");
       hideNavigation();
     };
 
     if (bootVisible) {
-      window.setTimeout(() => requestAnimationFrame(ready), 620);
+      window.setTimeout(ready, 620);
+      window.setTimeout(ready, 980);
       return;
     }
     requestAnimationFrame(ready);
+    window.setTimeout(ready, 160);
   });
 
   window.addEventListener("pageshow", () => {
     isNavigating = false;
     markVisited(new URL(window.location.href));
-    document.body.classList.remove("page-is-leaving");
+    document.body.classList.remove("page-is-leaving", "page-is-soft-leaving");
     hideNavigation();
   });
 
@@ -136,13 +141,9 @@
 
       const url = new URL(link.href, window.location.href);
       const label = destinationLabel(link, url);
-      if (!shouldUseNavigationLoader(link, url)) {
-        markStartupSuppressed();
-        return;
-      }
 
       event.preventDefault();
-      navigate(link.href, label, { loader: true });
+      navigate(link.href, label, { loader: shouldUseNavigationLoader(link, url) });
     });
   }
 
@@ -173,13 +174,23 @@
       window.location.href = href;
     };
 
-    if (reduceMotion.matches || !useLoader) {
+    if (reduceMotion.matches) {
       go();
       return;
     }
 
+    if (!useLoader) {
+      showSoftNavigation();
+      window.setTimeout(go, 180);
+      return;
+    }
+
     showNavigation(label || destinationLabel(null, url));
-    window.setTimeout(go, 90);
+    window.setTimeout(go, 110);
+  }
+
+  function showSoftNavigation() {
+    document.body.classList.add("page-is-leaving", "page-is-soft-leaving");
   }
 
   function showNavigation(label = "ChemVault") {
@@ -194,6 +205,7 @@
   function hideNavigation() {
     overlay?.classList.remove("is-active");
     overlay?.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("page-is-soft-leaving");
   }
 
   function showStartupLoader() {
@@ -212,6 +224,7 @@
     }
     document.documentElement.classList.remove("motion-boot");
     document.documentElement.classList.remove("motion-boot-timeout");
+    window.setTimeout(() => document.documentElement.classList.remove("motion-soft-enter"), 420);
     document.body.classList.remove("site-is-booting");
   }
 
