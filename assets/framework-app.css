@@ -139,6 +139,8 @@
 
 .framework-inspector-panel {
   grid-column: auto;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: start;
 }
 
 .framework-nav-panel button {
@@ -420,27 +422,27 @@
 
 @media (min-width: 1500px) {
   .framework-main-grid {
-    grid-template-columns: 230px minmax(0, 1fr) 270px;
-  }
-
-  .framework-nav-panel {
-    position: sticky;
-    top: 78px;
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .framework-nav-panel {
+    position: static;
+    top: auto;
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+  }
+
   .framework-nav-panel button {
-    text-align: left;
+    text-align: center;
   }
 
   .framework-inspector-panel {
     grid-column: auto;
-    position: sticky;
-    top: 78px;
+    position: static;
+    top: auto;
   }
 
   .react-view-grid {
-    grid-template-columns: 300px minmax(0, 1fr) 260px;
+    grid-template-columns: minmax(270px, 320px) minmax(0, 1fr) minmax(240px, 280px);
   }
 }
 
